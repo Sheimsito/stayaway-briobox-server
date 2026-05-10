@@ -1,4 +1,4 @@
-import { userDAO, UserDAO } from "../dao/userDAO.js";
+import { clientDAO } from "../dao/clientDAO";
 import { Request, Response } from "express";
 import config from "../config/config.js";
 import bcrypt from "bcrypt";
@@ -7,11 +7,58 @@ import bcrypt from "bcrypt";
 interface UserProfileRequest {
     userId: string;
 }
+
+
 /**
- * Retrieves the profile of the authenticated user.
+ * Create User 
+ */
+
+const createClient = async(req: Request, res: Response) => {
+  try{
+    const { name, lastName, age, email, phoneNumber, address } = req.body;
+    // Validate required fields
+    if (!name || !lastName || !age || !email || !phoneNumber || !address) {
+      return res.status(400).json({ message: "Todos los campos son obligatorios." });
+    }
+    // Validate age
+    else if (age < 13) {
+      return res.status(400).json({ message: "La edad debe ser mayor o igual a 13 años." });
+    }
+    // Validate email format
+    const emailRule: RegExp = /^\S+@\S+\.\S+$/;
+    if (!emailRule.test(email)) {
+      return res.status(400).json({ message: "El formato de la dirección de correo electrónico no es válido" });
+    }
+    // Validate phone number format
+    const phoneRule: RegExp = /^[0-9]{10}$/;
+    if (!phoneRule.test(phoneNumber)) {
+      return res.status(400).json({ message: "El formato del número de teléfono no es válido" });
+    }
+    // Validate if user already exists
+    const existingUserByEmail = await clientDAO.findByEmail(email);
+    if (existingUserByEmail !== null) {
+      return res.status(409).json({ message: "Este correo ya está registrado." });
+    }
+    // Validate if user already exists
+    const existingUserByPhone = await clientDAO.findByPhoneNumber(phoneNumber);
+    if (existingUserByPhone !== null) {
+      return res.status(409).json({ message: "Este número de teléfono ya está registrado." });
+    }
+    // Create user in database if all validation passes
+    const user = await clientDAO.create({ name, lastName, age, email, phoneNumber, address });
+    res.status(201).json({ userId: user.id });
+
+    } catch (error: unknown) {
+      // If error is an instance of Error, return the message
+      res.status(400).json({ message: error instanceof Error ? error.message : "Error interno del servidor"});
+    }
+}
+
+/**
+ * Retrieves the profile of the authenticated client.
  *
  * @async
- * @function getUserProfile
+ * @function getClientProfile
  * @param {Request} req - Express request object containing `userId` in `req.user`.
  * @param {Response} res - Express response object.
  * @returns {Promise<void>} Returns a JSON response with:
@@ -22,22 +69,22 @@ interface UserProfileRequest {
  *  - 500: `{ success: false, message: error.message }`
  * if an internal error occurs.
  */
-const getUserProfile = async (req: any, res: Response) => {
+const getClientProfile = async (req: any, res: Response) => {
     try {
-      const userId: string = req.user?.userId;
+      const clientId: string = req.user?.userId;
   
-        const userProfile = await userDAO.findById(userId);
+        const clientProfile = await clientDAO.findById(clientId);
   
-      if (!userProfile) {
+      if (!clientProfile) {
         return res.status(404).json({
           success: false,
-          message: "Usuario no encontrado."
+          message: "Cliente no encontrado."
         });
       }
   
       res.status(200).json({
         success: true,
-        user: userProfile
+        user: clientProfile
       });
     } catch (err: unknown) {
       if (config.nodeEnv === "development") {
@@ -50,21 +97,21 @@ const getUserProfile = async (req: any, res: Response) => {
     }
   };
 
-interface UpdateUserProfileRequest {
-    userId: string;
+interface UpdateClient {
+    clientId: string;
     name: string;
     lastName: string;
     age: number;
     email: string;
-    currentPassword: string | null;
-    newPassword: string | null;
+    phoneNumber: string;
+    address: string;
 }
 
 /**
- * Updates the authenticated user's profile.
+ * Updates the authenticated client's profile.
  *
  * @async
- * @function updateUserProfile
+ * @function updateClient
  * @param {Request} req - Request object con userId en req.user
  * @param {Response} res - Response object
  * @returns {Promise<void>} Returns a JSON object with:
@@ -73,23 +120,23 @@ interface UpdateUserProfileRequest {
  *  - 404: `{ success: false, message: "Usuario no encontrado." }` if the user does not exist.
  *  - 500: `{ success: false, message: error.message }`if an internal error occurs.
  */
-const updateUserProfile = async (req: any, res: Response) => {
+const updateClient = async (req: any, res: Response) => {
     try {
-      const userId = req.user?.userId;
-      const { name, lastName, age, email, currentPassword, newPassword } = req.body;
+      const clientId = req.user?.userId;
+      const { name, lastName, age, email, phoneNumber, address } = req.body;
   
       // Verify that the user exists
-      const existingUser = await userDAO.findById(userId);
+      const existingUser = await clientDAO.findById(clientId);
       if (!existingUser) {
         return res.status(404).json({
           success: false,
-          message: "Usuario no encontrado."
+          message: "Cliente no encontrado."
         });
       }
   
       // Check if the email already exists for another user
       if (email && email !== existingUser.email) {
-        const emailExists = await userDAO.findByEmail(email);
+        const emailExists = await clientDAO.findByEmail(email);
         if (emailExists) {
           return res.status(400).json({
             success: false,
@@ -98,76 +145,30 @@ const updateUserProfile = async (req: any, res: Response) => {
         }
       }
   
-      // Handle password change if provided
-      if (currentPassword && newPassword) {
-        // Verify current password
-        const isCurrentPasswordValid: boolean = await bcrypt.compare(currentPassword, existingUser.password);
-        if (!isCurrentPasswordValid) {
-          return res.status(400).json({
-            success: false,
-            message: "La contraseña actual es incorrecta."
-          });
-        }
-  
-        // Validate new password
-        if (newPassword.length < 6) {
-          return res.status(400).json({
-            success: false,
-            message: "La nueva contraseña debe tener al menos 6 caracteres."
-          });
-        }
-  
-        // Hash new password
-        const saltRounds: number = 10;
-        const hashedNewPassword: string = await bcrypt.hash(newPassword, saltRounds);
-  
-        // Update user with new password
-        const updatedUser = await userDAO.updateById(userId, {
-          name: name,
-          lastName: lastName,
-          age: age,
-          email: email,
-          password: hashedNewPassword
-        });
-        if (!updatedUser) {
-          return res.status(404).json({
-            success: false,
-            message: "Usuario no encontrado."
-          });
-        }
-  
-        // Get the updated profile (without sensitive data)
-        const userProfile = await userDAO.findById(userId);
-  
-        return res.status(200).json({
-          success: true,
-          user: userProfile,
-          message: "Perfil y contraseña actualizados exitosamente."
-        });
-      }
-  
-      // Update user without password change
-      const updatedUser = await userDAO.updateById(userId, {
+      // Update client 
+      const updatedUser = await clientDAO.updateById(clientId, {
         name: name,
         lastName: lastName,
         age: age,
-        email: email
+        email: email,
+        phoneNumber: phoneNumber,
+        address: address
       });
   
       if (!updatedUser) {
         return res.status(404).json({
           success: false,
-          message: "Usuario no encontrado."
+          message: "Cliente no encontrado."
         });
       }
   
       // Get the updated profile (without sensitive data)
-      const userProfile = await userDAO.findById(userId);
+      const userProfile = await clientDAO.findById(clientId);
   
       res.status(200).json({
         success: true,
         user: userProfile,
-        message: "Perfil actualizado exitosamente."
+        message: "Usuario actualizado exitosamente."
       });
     } catch (err: unknown) {
       if (config.nodeEnv === "development") {
@@ -184,7 +185,7 @@ const updateUserProfile = async (req: any, res: Response) => {
 
 
 
-interface DeleteUserProfileRequest {
+interface DeleteClientRequest {
     userId: string;
 }
 
@@ -201,11 +202,11 @@ interface DeleteUserProfileRequest {
  */
 const softDeleteAccount = async (req: any, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const clientId = req.user?.userId;
   
 
       // Soft delete the user account
-      const deleted: boolean = await userDAO.softDeleteById(userId);
+      const deleted: boolean = await clientDAO.softDeleteById(clientId);
       if (!deleted) {
         return res.status(404).json({ success: false, message: "Usuario no encontrado o ya eliminado." });
       }
@@ -229,4 +230,4 @@ const softDeleteAccount = async (req: any, res: Response) => {
   };
 
 
-export default { getUserProfile, updateUserProfile, softDeleteAccount };
+export default { createClient, getClientProfile, updateClient, softDeleteAccount };

@@ -12,6 +12,8 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(url, se
   auth: { persistSession: false },
 });
 
+
+
 // This is the supabase client without strict types for the generic BaseDAO
 export const supabaseGeneric: SupabaseClient = createClient(url, serviceRoleKey, {
   auth: { persistSession: false },

@@ -13,57 +13,7 @@ interface RegisterRequest {
     email: string;
     password: string;
 }
-/**
-* Registers a new user in the database.
-*
-* @async
-* @function register
-* @param {import('express').Request} req Express HTTP request object.
-* @param {import('express').Response} res Express HTTP response object.
-* @returns {Promise<void>} Does not return directly; sends a JSON response.
-*
-* @throws {409} If the email is already registered. Response: `{ message: "This email is already registered." }`
-* @throws {400} If a validation or other error occurs. Response: `{ message: error.message }`
-*/
 
-const register = async (req: Request<{}, {}, RegisterRequest>, res: Response) => {
-    try {
-        const { name, lastName, age, email, password } = req.body;
-        // Validate required fields
-        if( !name || !lastName || !age || !email || !password) {
-            return res.status(400).json({ message: "Todos los campos son obligatorios." });
-        }
-        // Validate age
-        else if(age < 13) {
-            return res.status(400).json({ message: "La edad debe ser mayor o igual a 13 años." });
-        }
-
-        // Validate email format
-        const emailRule: RegExp = /^\S+@\S+\.\S+$/;
-        if(!emailRule.test(email)) {
-            return res.status(400).json({ message: "El formato de la dirección de correo electrónico no es válido" });
-        }
-
-        // Validate password format
-        const passwordRule: RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        if(!passwordRule.test(password)) {
-            return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial." });
-        }
-
-        // Validate if user already exists
-        const existingUser = await userDAO.findByEmail(email); 
-        if(existingUser !== null) {
-            return res.status(409).json({ message: "Este correo ya está registrado." });
-        }
-
-        // Create user in database if all validation passes
-        const user = await userDAO.create({ name, lastName, age, email, password }); 
-        res.status(201).json({ userId: user.id });
-    } catch (error: unknown) {
-        // If error is an instance of Error, return the message
-        res.status(400).json({ message: error instanceof Error ? error.message : "Error interno del servidor"});
-    }
-}
 
 interface LoginRequest {
     email: string;
@@ -82,7 +32,8 @@ interface LoginRequest {
 const login = async (req: Request<{}, {}, LoginRequest>, res: Response) => {
     try {
         const { email, password } = req.body;
-
+        console.log(email);
+        console.log(password);
         switch(true) {
             case !email:
                 return res.status(400).json({ message: "El correo es obligatorio." });
@@ -91,6 +42,7 @@ const login = async (req: Request<{}, {}, LoginRequest>, res: Response) => {
         }   
 
         const user = await userDAO.findByEmail(email);
+        console.log(user);
         if(!user) {
             return res.status(401).json({ message: "Correo o contraseña incorrectos." });
         }
@@ -197,7 +149,7 @@ const forgotPassword = async (req: Request<{}, {}, ForgotPasswordRequest>, res: 
   
       // In development, send to verified Resend email (not production user emails)
       const emailToSend: string = config.emailToSend; // Right now it is set to the email of the dev team, but in the future it will be set to the email of the user who forgot their password
-
+      
       // Prepare template variables
       const templateVariables: TemplateVariables = {
         APP_NAME: config.appName,
@@ -422,4 +374,4 @@ Tu seguridad es nuestra prioridad - Equipo de Seguridad`;
   }
 };
 
-export default { register, login, logout, forgotPassword, resetPassword, verifyAuth, sendAccountBlockedEmail };
+export default { login, logout, forgotPassword, resetPassword, verifyAuth, sendAccountBlockedEmail };

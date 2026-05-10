@@ -1,1091 +1,531 @@
-# 🎬 AirFilms Server
+# 🏗️ Arquitectura del Proyecto — Brio Box API
 
-Backend API para la plataforma AirFilms construido con Node.js, Express, TypeScript y Supabase.
-
-## 📋 Tabla de Contenidos
-
-- [Características](#-características)
-- [Tecnologías](#-tecnologías)
-- [Requisitos Previos](#-requisitos-previos)
-- [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Uso](#-uso)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [API Endpoints](#-api-endpoints)
-- [Scripts Disponibles](#-scripts-disponibles)
-- [Arquitectura](#-arquitectura)
-- [Contribuir](#-contribuir)
+Este documento describe la arquitectura, patrones de diseño y decisiones técnicas del backend de Brio Box API.
 
 ---
 
-## ✨ Características
+## 📐 Tabla de Contenidos
 
-- 🔐 **Autenticación completa**: Registro, login, logout, recuperación de contraseña, verificación de sesión
-- 👤 **Gestión de usuarios**: Perfil, actualización, soft delete
-- 🎬 **Sistema de películas**: Búsqueda, detalles, películas populares
-- ❤️ **Sistema de favoritos**: Agregar, eliminar y listar películas favoritas
-- 💬 **Sistema de comentarios**: Agregar, eliminar y listar comentarios de películas con paginación
-- ⭐ **Sistema de ratings**: Calificar películas (0-5 estrellas), ver estadísticas y distribución
-- 🎥 **Integración con APIs externas**: TMDB para películas, Pexels para videos
-- 🗄️ **Integración con Supabase** (PostgreSQL)
-- 🏗️ **Arquitectura en capas** (DAO, Services, Controllers)
-- 📝 **TypeScript** para type-safety completa
-- 🔄 **Hot-reload** en desarrollo con `tsx`
-- 🛡️ **Manejo centralizado de errores** (Supabase, JWT, validación)
-- ✅ **Validación robusta** de datos de entrada
-- 🔒 **Seguridad implementada**:
-  - Bcrypt para contraseñas (10 salt rounds)
-  - JWT para autenticación (24h)
-  - Rate limiting en login (3-5 intentos/5min)
-  - CORS configurado
-  - Cookies seguras (httpOnly, secure)
-- 📧 **Email transaccional** con Resend API
-- 📊 **Logging** de requests/responses
-- 🚫 **Soft delete** (no eliminación física de datos)
+1. [Visión General](#-visión-general)
+2. [Arquitectura en Capas](#-arquitectura-en-capas)
+3. [Flujo de Datos](#-flujo-de-datos)
+4. [Patrones de Diseño](#-patrones-de-diseño)
+5. [Estructura de Carpetas](#-estructura-de-carpetas)
+6. [Base de Datos](#-base-de-datos)
+7. [Decisiones Técnicas](#-decisiones-técnicas)
+8. [Seguridad](#-seguridad)
 
 ---
 
-## 🛠️ Tecnologías
+## 🎯 Visión General
 
-- **Runtime:** Node.js v22+
-- **Framework:** Express v5
-- **Lenguaje:** TypeScript v5
-- **Base de Datos:** Supabase (PostgreSQL)
-- **APIs Externas:** TMDB API, Pexels API
-- **Email Service:** Resend API
-- **Dev Tools:** tsx, ESLint, Prettier
-- **ORM/Query Builder:** @supabase/supabase-js
+Brio Box API es una API RESTful construida con **arquitectura en capas** que separa las responsabilidades en diferentes niveles, facilitando el mantenimiento, testing y escalabilidad.
 
----
+### Principios Arquitectónicos
 
-## 📦 Requisitos Previos
-
-Antes de comenzar, asegúrate de tener instalado:
-
-- [Node.js](https://nodejs.org/) (v18 o superior)
-- [npm](https://www.npmjs.com/) o [pnpm](https://pnpm.io/)
-- Una cuenta de [Supabase](https://supabase.com/)
+- ✅ **Separation of Concerns (SoC):** Cada capa tiene una responsabilidad específica
+- ✅ **Single Responsibility Principle (SRP):** Cada clase/módulo tiene un propósito único
+- ✅ **Dependency Injection:** Las dependencias se inyectan, no se instancian
+- ✅ **DRY (Don't Repeat Yourself):** Código reutilizable mediante abstracciones
+- ✅ **Type Safety:** TypeScript garantiza tipos en tiempo de compilación
 
 ---
 
-## 🚀 Instalación
+## 🧱 Arquitectura en Capas
 
-1. **Clona el repositorio:**
-
-```bash
-git clone <url-del-repositorio>
-cd airfilms-server
+```
+┌─────────────────────────────────────────────┐
+│           CLIENT (Frontend/Mobile)           │
+└─────────────────────────────────────────────┘
+                     ↕ HTTPS
+┌─────────────────────────────────────────────┐
+│         PRESENTATION LAYER (Express)         │
+│  ┌──────────────────────────────────────┐   │
+│  │   Routes → Controllers → Middleware   │   │
+│  └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+                     ↕
+┌─────────────────────────────────────────────┐
+│              SERVICES LAYER                  │
+│  ┌──────────────────────────────────────┐   │
+│  │  External Services Integration       │   │
+│  │  • Email (Resend)                    │   │
+│  └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+                     ↕
+┌─────────────────────────────────────────────┐
+│          DATA ACCESS LAYER (DAO)             │
+│  ┌──────────────────────────────────────┐   │
+│  │    BaseDAO → SpecificDAO → Supabase  │   │
+│  └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+                     ↕
+┌─────────────────────────────────────────────┐
+│            DATABASE (Supabase)               │
+└─────────────────────────────────────────────┘
 ```
 
-2. **Instala las dependencias:**
+### Descripción de Capas
 
-```bash
-npm install
-```
+#### 1. Presentation Layer (Capa de Presentación)
 
-3. **Configura las variables de entorno:**
+**Responsabilidad:** Manejar las peticiones HTTP y respuestas.
 
-Crea un archivo `.env` en la raíz del proyecto (ver [Configuración](#-configuración)).
+**Componentes:**
+- **Routes:** Definen los endpoints de la API
+- **Controllers:** Procesan las peticiones y delegan la lógica — Auth, User controllers
+- **Middleware:** Interceptan peticiones (autenticación, validación, manejo de errores)
+
+**Ubicación:** `src/routes/`, `src/controllers/`, `src/middleware/`
+
+#### 2. Business Logic & Services Layer (Capa de Servicios Externos)
+
+**Responsabilidad:** Integrar servicios externos y orquestar operaciones complejas.
+
+**Componentes:**
+- **Email Service (Resend):** Envío de emails transaccionales (recuperación de contraseña)
+
+**Ubicación:** `src/service/`
+
+#### 3. Data Access Layer (Capa de Acceso a Datos)
+
+**Responsabilidad:** Abstraer las operaciones de base de datos.
+
+**Componentes:**
+- **DAOs (Data Access Objects):** Encapsulan consultas a la base de datos
+- **BaseDAO:** Clase genérica con operaciones CRUD comunes
+- **UserDAO:** Operaciones específicas de usuarios (`findByEmail`, `updateResetPasswordJti`)
+
+**Ubicación:** `src/dao/`
+
+#### 4. Database Layer (Capa de Base de Datos)
+
+**Responsabilidad:** Almacenar y gestionar datos persistentes.
+
+**Tecnología:** Supabase (PostgreSQL)
 
 ---
 
-## ⚙️ Configuración
+## 🔄 Flujo de Datos
 
-### Variables de Entorno
-
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=development
-
-# Supabase Configuration
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
-
-# Frontend URL (para CORS)
-FRONTEND_URL=http://localhost:5173
-
-# JWT Secrets
-JWT_SECRET=tu_jwt_secret_super_seguro
-JWT_RESET_PASSWORD_SECRET=tu_jwt_reset_password_secret
-
-# Email Service (Resend)
-RESEND_API_KEY=tu_resend_api_key
-
-# External APIs
-TMDB_API_KEY=tu_tmdb_api_key
-PEXELS_API_KEY=tu_pexels_api_key
-
-# API Configuration
-API_VERSION=v1
-API_PREFIX=/api
-```
-
-### Obtener las credenciales de Supabase
-
-1. Ve a tu [Dashboard de Supabase](https://supabase.com/dashboard)
-2. Selecciona tu proyecto
-3. Ve a **Settings** → **API**
-4. Copia:
-   - **Project URL** → `SUPABASE_URL`
-   - **service_role key** → `SUPABASE_SERVICE_ROLE_KEY` (¡solo para backend!)
-
-### Obtener las credenciales de APIs externas
-
-#### TMDB API
-1. Ve a [TMDB API](https://www.themoviedb.org/settings/api)
-2. Crea una cuenta y solicita una API key
-3. Copia la API key → `TMDB_API_KEY`
-
-#### Pexels API
-1. Ve a [Pexels API](https://www.pexels.com/api/)
-2. Crea una cuenta y obtén tu API key
-3. Copia la API key → `PEXELS_API_KEY`
-
----
-
-## 🎮 Uso
-
-### Modo Desarrollo
-
-Ejecuta el servidor con hot-reload:
-
-```bash
-npm run dev
-```
-
-El servidor estará disponible en `http://localhost:5000`
-
-### Modo Producción
-
-1. **Compila el proyecto:**
-
-```bash
-npm run build
-```
-
-2. **Inicia el servidor:**
-
-```bash
-npm start
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
----
-
-## 📁 Estructura del Proyecto
+### Ejemplo 1: Registro de Usuario
 
 ```
-airfilms-server/
-├── src/
-│   ├── config/              # Configuración de la aplicación
-│   │   ├── config.ts        # Variables de entorno centralizadas
-│   │   └── server.ts        # Configuración de Express (CORS, middlewares)
-│   ├── controllers/         # Controladores de rutas
-│   │   ├── authController.ts   # Autenticación, recuperación de contraseña y verificación
-│   │   ├── userController.ts   # Gestión de perfil de usuario
-│   │   ├── movieController.ts  # Gestión de películas y búsquedas
-│   │   ├── favoritesController.ts # Gestión de películas favoritas
-│   │   ├── commentController.ts  # Gestión de comentarios de películas
-│   │   └── ratingController.ts   # Gestión de calificaciones de películas
-│   ├── dao/                 # Data Access Objects
-│   │   ├── baseDAO.ts       # DAO genérico (CRUD + soft delete)
-│   │   ├── userDAO.ts       # DAO específico de usuarios
-│   │   ├── favoritesDAO.ts  # DAO específico de favoritos
-│   │   ├── commentDAO.ts    # DAO específico de comentarios
-│   │   ├── ratingDAO.ts     # DAO específico de calificaciones
-│   │   └── movieAssetsDAO.ts # DAO específico de assets de películas
-│   ├── lib/                 # Librerías y clientes externos
-│   │   └── supabaseClient.ts
-│   ├── middleware/          # Middlewares de Express
-│   │   ├── auth.ts          # JWT authentication + rate limiting
-│   │   ├── errorHandler.ts  # Manejo de errores centralizados
-│   │   ├── logger.ts        # Logger de requests/responses
-│   │   └── notFound.ts      # Manejo de rutas 404
-│   ├── routes/              # Definición de rutas
-│   │   ├── index.ts         # Router principal
-│   │   ├── authRoutes.ts    # Rutas de autenticación (públicas)
-│   │   ├── userRoutes.ts    # Rutas de usuario (protegidas)
-│   │   └── movieRoutes.ts   # Rutas de películas y favoritos
-│   ├── service/             # Integraciones con servicios externos
-│   │   ├── resendService.ts # Envío de emails transaccionales
-│   │   ├── tmbdService.ts   # Integración con TMDB API
-│   │   ├── pexelsService.ts # Integración con Pexels API
-│   │   └── emailTemplates.ts # Plantillas de emails
-│   ├── types/               # Tipos TypeScript (Single Source of Truth)
-│   │   ├── database.ts      # Tipos de base de datos Supabase
-│   │   └── express.d.ts     # Extensiones de tipos Express
-│   └── server.ts            # Punto de entrada de la aplicación
-├── .env                     # Variables de entorno (no versionado)
-├── .gitignore
-├── package.json
-├── tsconfig.json            # Configuración de TypeScript
-├── ARCHITECTURE.md          # Documentación detallada de arquitectura
-└── README.md                # Este archivo
+1. CLIENT
+   └─> POST /api/auth/register
+       Body: { name, lastName, age, email, password }
+       ↓
+2. ROUTE (routes/index.ts → authRoutes.ts)
+   └─> router.post('/register', authController.register)
+       ↓
+3. CONTROLLER (authController.ts)
+   ├─> Valida campos requeridos (name, lastName, age, email, password)
+   ├─> Valida formato de email (regex)
+   ├─> Valida formato de contraseña (min 8 chars, mayúscula, número, especial)
+   ├─> Verifica que el email no exista (userDAO.findByEmail)
+   └─> Llama a userDAO.create(userData)
+       ↓
+4. DAO (userDAO.ts → baseDAO.ts)
+   ├─> userDAO.create() hashea la contraseña con bcrypt
+   ├─> BaseDAO.create() ejecuta:
+   │   └─> supabase.from('users').insert([payload]).select('*').single()
+   └─> Retorna el usuario creado
+       ↓
+5. DATABASE (Supabase)
+   ├─> Valida constraints (unique email, not null, check constraints)
+   ├─> Inserta registro con valores por defecto (isDeleted: false, timestamps)
+   └─> Retorna datos insertados
+       ↓
+6. RESPONSE
+   └─> Status: 201 Created
+       Body: { userId: "uuid" }
+```
+
+### Ejemplo 2: Recuperación de Contraseña
+
+```
+1. CLIENT
+   └─> POST /api/auth/forgot-password
+       Body: { email: "user@example.com" }
+       ↓
+2. CONTROLLER (authController.forgotPassword)
+   ├─> Busca usuario por email (userDAO.findByEmail)
+   ├─> Si no existe: retorna 202 (por seguridad, no revelar si existe)
+   ├─> Genera jwtid único (random string)
+   ├─> Crea JWT con userId y jwtid, expiración 1h
+   └─> Guarda jwtid en DB (userDAO.updateResetPasswordJti)
+       ↓
+3. EXTERNAL SERVICE (resendService)
+   ├─> Genera link: ${FRONTEND_URL}/reset-password?token=${resetToken}
+   ├─> En desarrollo: envía a email verificado
+   ├─> En producción: envía al email del usuario
+   └─> Email: "Haz clic para restablecer tu contraseña"
+       ↓
+4. CLIENT (Usuario hace click en el link)
+   └─> POST /api/auth/reset-password
+       Body: { token: "jwt...", newPassword: "NewPass123!" }
+       ↓
+5. CONTROLLER (authController.resetPassword)
+   ├─> Verifica JWT (jwt.verify)
+   ├─> Busca usuario (userDAO.findById)
+   ├─> Verifica que user.resetPasswordJti === decoded.jti
+   ├─> Valida nueva contraseña (min 8, mayúscula, número, especial)
+   ├─> Invalida el token (updateResetPasswordJti con "")
+   └─> Actualiza contraseña hasheada (userDAO.updateById)
+       ↓
+6. RESPONSE
+   └─> Status: 200 OK
+       Body: { success: true, message: "Contraseña actualizada." }
+```
+
+### Ejemplo 3: Verificación de Autenticación
+
+```
+1. CLIENT
+   └─> GET /api/auth/verify-auth
+       Headers: Authorization: Bearer <token>  o  Cookie: access_token
+       ↓
+2. MIDDLEWARE (authenticateToken)
+   ├─> Extrae token del header o cookie
+   ├─> Verifica firma del JWT (jwt.verify)
+   ├─> Verifica expiración
+   ├─> Inyecta user.userId en req.user
+   └─> Pasa al controlador
+       ↓
+3. CONTROLLER (authController.verifyAuth)
+   ├─> Lee req.user.userId (inyectado por middleware)
+   └─> Retorna información del usuario
+       ↓
+4. RESPONSE
+   └─> Status: 200 OK
+       Body: { success: true, user: { id: "uuid" } }
+       // Si el token es inválido o expiró:
+       // MIDDLEWARE → 401 Unauthorized: { message: "No autorizado." }
 ```
 
 ---
 
-## 🔌 API Endpoints
+## 🎨 Patrones de Diseño
 
-### Base URL
-```
-http://localhost:5000/api
-```
+### 1. DAO Pattern (Data Access Object)
 
----
+Abstrae y encapsula todo el acceso a la fuente de datos.
 
-### 🔓 Autenticación (Públicas)
+**Ventajas:**
+- Separa la lógica de persistencia de la lógica de negocio
+- Facilita el cambio de base de datos sin afectar otras capas
+- Permite testing mediante mocks
 
-Todas las rutas bajo `/api/auth` son públicas.
+**Implementación:**
 
-#### `POST /api/auth/register`
-
-Registra un nuevo usuario.
-
-**Request Body:**
-```json
-{
-  "name": "Juan",
-  "lastName": "García",
-  "age": 25,
-  "email": "juan@example.com",
-  "password": "Password123!"
+```typescript
+// Base genérico
+class BaseDAO<Row, Insert, Update> {
+  async create(payload: Insert): Promise<Row> { }
+  async findById(id: string): Promise<Row> { }
+  async list(params): Promise<Paginated<Row>> { }
+  async updateById(id: string, payload: Update): Promise<Row> { }
+  async deleteById(id: string): Promise<boolean> { }
 }
-```
 
-**Validaciones:**
-- Todos los campos obligatorios
-- Edad ≥ 13 años
-- Email formato válido
-- Password: min 8 chars, mayúscula, minúscula, número, carácter especial
-
-**Response (201 Created):**
-```json
-{
-  "userId": "uuid-generado"
-}
-```
-
-**Response (409 Conflict):**
-```json
-{
-  "message": "Este correo ya está registrado."
-}
-```
-
----
-
-#### `POST /api/auth/login`
-
-Inicia sesión de usuario.
-
-**Rate Limit:** 3-5 intentos por 5 minutos
-
-**Request Body:**
-```json
-{
-  "email": "juan@example.com",
-  "password": "Password123!"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "message": "Inicio de sesión exitoso.",
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
-**Set-Cookie:** `access_token` (httpOnly, 24h)
-
-**Response (401 Unauthorized):**
-```json
-{
-  "message": "Correo o contraseña incorrectos."
-}
-```
-
-**Response (403 Forbidden):**
-```json
-{
-  "message": "Tu cuenta está deshabilitada."
-}
-```
-
----
-
-#### `POST /api/auth/logout`
-
-Cierra sesión (requiere autenticación).
-
-**Headers:** `Authorization: Bearer <token>` o Cookie
-
-**Response (200 OK):**
-```json
-{
-  "message": "Cierre de sesión exitoso."
-}
-```
-
----
-
-#### `POST /api/auth/forgot-password`
-
-Solicita restablecimiento de contraseña.
-
-**Request Body:**
-```json
-{
-  "email": "juan@example.com"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true
-}
-```
-
-**Nota:** Por seguridad, siempre retorna 200 aunque el email no exista.
-
----
-
-#### `POST /api/auth/reset-password`
-
-Restablece la contraseña con token recibido por email.
-
-**Request Body:**
-```json
-{
-  "token": "jwt-token-from-email",
-  "newPassword": "NewPassword123!"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Contraseña actualizada."
-}
-```
-
-**Response (400 Bad Request):**
-```json
-{
-  "success": false,
-  "message": "Enlace inválido o ya utilizado."
-}
-```
-
----
-
-#### `GET /api/auth/verify-auth`
-
-Verifica si el usuario está autenticado (requiere autenticación).
-
-**Headers:** `Authorization: Bearer <token>` o Cookie
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "user": {
-    "id": "uuid"
+// Implementación específica
+class UserDAO extends BaseDAO<UserRow, UserInsert, UserUpdate> {
+  constructor() {
+    super('users'); // nombre de la tabla
   }
+
+  // Métodos adicionales específicos de usuarios
+  async findByEmail(email: string): Promise<UserRow | null> { }
 }
 ```
 
-**Response (401 Unauthorized):**
-```json
-{
-  "message": "No autorizado."
-}
+### 2. Singleton Pattern
+
+El cliente de Supabase se instancia una sola vez:
+
+```typescript
+// supabaseClient.ts
+export const supabase = createClient(...); // Una sola instancia
+
+// Uso en múltiples archivos
+import { supabase } from './lib/supabaseClient';
 ```
 
-**Nota:** Este endpoint es útil para verificar si un token sigue siendo válido sin necesidad de hacer una petición completa al perfil.
+### 3. MVC Pattern (Model-View-Controller)
 
----
+Aunque no hay "vistas" (es una API), se sigue una variante:
 
-### 🔒 Usuario (Protegidas)
+- **Model:** `src/types/database.ts` (tipos de datos)
+- **Controller:** `src/controllers/`
+- **"View":** JSON responses
 
-Todas las rutas bajo `/api/users` requieren autenticación.
+### 4. Middleware Pattern
 
-**Headers requeridos:**
-```
-Authorization: Bearer <token>
-```
+Interceptan peticiones antes de llegar al controlador:
 
-O cookie `access_token`.
-
----
-
-#### `GET /api/users/profile`
-
-Obtiene el perfil del usuario autenticado.
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "user": {
-    "id": "uuid",
-    "name": "Juan",
-    "lastName": "García",
-    "age": 25,
-    "email": "juan@example.com",
-    "isDeleted": false,
-    "createdAt": "2025-10-13T...",
-    "updatedAt": "2025-10-13T..."
-  }
-}
+```typescript
+app.use(express.json());          // Parse JSON
+app.use('/api/users', userRoutes); // Routing
+app.use(errorHandler);             // Error handling
 ```
 
 ---
 
-#### `PUT /api/users/profile`
+## 📂 Estructura de Carpetas
 
-Actualiza el perfil del usuario.
-
-**Request Body:**
-```json
-{
-  "name": "Juan Carlos",
-  "lastName": "García López",
-  "age": 26,
-  "email": "juancarlos@example.com",
-  "currentPassword": "Password123!",
-  "newPassword": "NewPassword123!"
-}
 ```
-
-**Nota:** `currentPassword` y `newPassword` son opcionales. Si se proporcionan, se valida la contraseña actual y se actualiza.
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "user": { /* usuario actualizado */ },
-  "message": "Perfil actualizado exitosamente."
-}
-```
-
-**Response (400 Bad Request):**
-```json
-{
-  "success": false,
-  "message": "La contraseña actual es incorrecta."
-}
-```
-
----
-
-#### `DELETE /api/users/profile`
-
-Elimina la cuenta del usuario (soft delete).
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Cuenta eliminada."
-}
-```
-
-**Nota:** La cuenta se marca como `isDeleted: true` pero no se elimina físicamente de la base de datos.
-
----
-
-### 🎬 Películas (Públicas)
-
-Todas las rutas bajo `/api/movies` son públicas (excepto favoritos).
-
----
-
-#### `GET /api/movies/popular`
-
-Obtiene películas populares con paginación.
-
-**Query Parameters:**
-```
-?page=1 (opcional, por defecto 1)
-```
-
-**Response (200 OK):**
-```json
-{
-  "page": 1,
-  "total_pages": 500,
-  "results": [
-    {
-      "id": 550,
-      "title": "Fight Club",
-      "releaseDate": "1999-10-15",
-      "poster": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
-    }
-  ]
-}
+src/
+├── config/                   # 🔧 Configuración
+│   ├── config.ts             # Variables de entorno centralizadas
+│   └── server.ts             # Configuración de Express (CORS, body parser, middlewares)
+│
+├── controllers/              # 🎮 Controladores
+│   ├── authController.ts     # Registro, login, logout, forgot/reset password, verify auth
+│   └── userController.ts     # Perfil de usuario, actualización, soft delete
+│
+├── dao/                      # 🗄️ Data Access Objects
+│   ├── baseDAO.ts            # DAO genérico (CRUD + soft delete)
+│   └── userDAO.ts            # DAO específico de usuarios
+│
+├── lib/                      # 📚 Librerías externas
+│   └── supabaseClient.ts     # Cliente de Supabase (tipado y genérico)
+│
+├── middleware/               # 🛡️ Middlewares
+│   ├── auth.ts               # Autenticación JWT + rate limiting
+│   ├── errorHandler.ts       # Manejo centralizado de errores (Supabase, JWT, etc.)
+│   ├── logger.ts             # Logger de peticiones HTTP
+│   └── notFound.ts           # Manejo de rutas 404
+│
+├── routes/                   # 🛣️ Definición de rutas
+│   ├── index.ts              # Router principal que agrupa todas las rutas
+│   ├── authRoutes.ts         # Rutas de autenticación (públicas)
+│   └── userRoutes.ts         # Rutas de usuario (protegidas)
+│
+├── service/                  # 🌐 Servicios externos e integraciones
+│   ├── resendService.ts      # Servicio de emails (Resend API)
+│   └── emailTemplates.ts     # Plantillas de emails
+│
+├── types/                    # 🏷️ Tipos TypeScript compartidos
+│   ├── database.ts           # Tipos de base de datos (Supabase) - Single Source of Truth
+│   └── express.d.ts          # Extensiones de tipos de Express (AuthRequest)
+│
+└── server.ts                 # 🌐 Punto de entrada principal (HTTP server)
 ```
 
 ---
 
-#### `GET /api/movies/details`
+## 🗄️ Base de Datos
 
-Obtiene detalles completos de una película específica.
+### Tecnología: Supabase (PostgreSQL)
 
-**Query Parameters:**
-```json
+**Características:**
+- Base de datos PostgreSQL gestionada
+- Row Level Security (RLS)
+- Realtime subscriptions
+- API REST automática
+- Storage para archivos
 
-  ?id=550
+### Tipos de Base de Datos
 
-```
+Todos los tipos están centralizados en `src/types/database.ts` como **single source of truth**.
 
-**Response (200 OK):**
-```json
-{
-  "id": 550,
-  "title": "Fight Club",
-  "poster": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-  "genres": ["Drama"],
-  "overview": "A ticking-time-bomb insomniac and a slippery soap salesman...",
-  "releaseDate": "1999-10-15",
-  "runtime": 139,
-  "original_language": "EN",
-  "status": "Released",
-  "videoId": "12345",
-  "videoThumbnail": "https://videos.pexels.com/video-files/12345/thumbnail.jpg"
+```typescript
+// types/database.ts
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row:    { /* campos de la tabla */ };
+        Insert: { /* campos requeridos para insert */ };
+        Update: { /* campos opcionales para update */ };
+      };
+    };
+  };
 }
+
+// Helper types exportados
+export type UserRow    = Database['public']['Tables']['users']['Row'];
+export type UserInsert = Database['public']['Tables']['users']['Insert'];
+export type UserUpdate = Database['public']['Tables']['users']['Update'];
 ```
+
+**Ventajas:**
+- ✅ Single source of truth
+- ✅ Puede generarse automáticamente desde Supabase
+- ✅ No hay duplicación de tipos
+- ✅ Consistencia garantizada
+
+### Esquema de Base de Datos
+
+#### Tabla: `users`
+
+| Columna           | Tipo      | Descripción                             |
+|-------------------|-----------|-----------------------------------------|
+| id                | UUID      | Primary Key (auto-generado)             |
+| name              | VARCHAR   | Nombre del usuario                      |
+| lastName          | VARCHAR   | Apellido del usuario                    |
+| age               | INTEGER   | Edad del usuario                        |
+| email             | VARCHAR   | Email único (unique constraint)         |
+| password          | VARCHAR   | Contraseña (hasheada con bcrypt)        |
+| resetPasswordJti  | VARCHAR   | Token para reset de contraseña          |
+| isDeleted         | BOOLEAN   | Soft delete flag                        |
+| createdAt         | TIMESTAMP | Fecha de creación                       |
+| updatedAt         | TIMESTAMP | Fecha de última actualización           |
+
+### Conexión
+
+```typescript
+// Dos clientes según necesidad:
+// 1. Cliente tipado (para uso específico)
+export const supabase = createClient<Database>(url, key);
+
+// 2. Cliente genérico (para BaseDAO)
+export const supabaseGeneric = createClient(url, key);
+```
+
+**¿Por qué dos clientes?**
+- El cliente tipado requiere que las tablas estén definidas en `Database`
+- El `BaseDAO` es genérico y trabaja con cualquier tabla
+- Esto evita conflictos de tipos en TypeScript
 
 ---
 
-#### `GET /api/movies/search`
+## 🧠 Decisiones Técnicas
 
-Busca películas por nombre.
+### 1. TypeScript sobre JavaScript
 
-**Query Parameters:**
-```
-  ?name=fight club
+**Razón:** Type-safety, mejor DX, menos bugs en producción.
 
-```
+### 2. ESM (ES Modules) en lugar de CommonJS
 
-**Response (200 OK):**
-```json
-{
-  "page": 1,
-  "total_pages": 1,
-  "results": [
-    {
-      "id": 550,
-      "title": "Fight Club",
-      "poster": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
-    }
-  ]
-}
-```
-
----
-
-#### `GET /api/movies/get-video`
-
-Obtiene información de video por ID.
-
-**Query Parameters:**
-```
-
-  ?id=12345
-
-```
-
-**Response (200 OK):**
-```json
-{
-  "id": 12345,
-  "url": "https://videos.pexels.com/video-files/12345/video.mp4",
-  "image": "https://videos.pexels.com/video-files/12345/thumbnail.jpg",
-  "duration": 30,
-  "user": {
-    "id": 123,
-    "name": "John Doe"
-  }
-}
-```
-
----
-
-### ❤️ Favoritos (Protegidas)
-
-Todas las rutas bajo `/api/movies` para favoritos requieren autenticación.
-
-**Headers requeridos:**
-```
-Authorization: Bearer <token>
-```
-
----
-
-#### `POST /api/movies/add-favorite`
-
-Agrega una película a favoritos.
-
-**Request Body:**
-```json
-{
-  "movieId": 550,
-  "movieName": "Fight Club",
-  "movieURL": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "favorite": {
-    "userId": "uuid",
-    "movieId": 550,
-    "movieName": "Fight Club",
-    "posterURL": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-    "createdAt": "2025-01-13T...",
-    "updatedAt": "2025-01-13T...",
-    "isDeleted": false
-  }
-}
-```
-
----
-
-#### `DELETE /api/movies/delete-favorite`
-
-Elimina una película de favoritos.
-
-**Request Body:**
-```json
-{
-  "movieId": 550
-}
-```
-
-**Response (201 OK):**
-```json
-{
-  "success": true,
-  "favorite": true
-}
-```
-
----
-
-#### `GET /api/movies/get-favorites`
-
-Obtiene todas las películas favoritas del usuario.
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "favorites": [
-    {
-      "userId": "uuid",
-      "movieId": 550,
-      "movieName": "Fight Club",
-      "posterURL": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-      "createdAt": "2025-01-13T...",
-      "updatedAt": "2025-01-13T...",
-      "isDeleted": false
-    }
-  ]
-}
-```
-
-**Response (404 Not Found):**
-```json
-{
-  "success": false,
-  "message": "No se encontraron favoritos."
-}
-```
-
----
-
-### 💬 Comentarios (Protegidas excepto listar)
-
-Las rutas de comentarios bajo `/api/movies` requieren autenticación para crear/eliminar.
-
-**Headers requeridos (para POST/DELETE):**
-```
-Authorization: Bearer <token>
-```
-
----
-
-#### `GET /api/movies/get-comments/:movieId`
-
-Obtiene todos los comentarios de una película con paginación.
-
-**Query Parameters (opcionales):**
-```
-?page=1&limit=20&orderBy={"column":"createdAt","ascending":false}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "comments": {
-    "data": [
-      {
-        "users": { "name": "Juan", "lastName": "García" },
-        "comment": "¡Excelente película!",
-        "createdAt": "2025-01-13T..."
-      }
-    ],
-    "count": 150
-  }
-}
-```
-
----
-
-#### `POST /api/movies/add-comment`
-
-Agrega un comentario a una película.
-
-**Request Body:**
-```json
-{
-  "movieId": 550,
-  "comment": "¡Excelente película!"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "commentCreated": {
-    "movieId": 550,
-    "userId": "uuid",
-    "comment": "¡Excelente película!",
-    "createdAt": "2025-01-13T..."
-  }
-}
-```
-
----
-
-#### `DELETE /api/movies/delete-comment`
-
-Elimina un comentario de una película.
-
-**Request Body:**
-```json
-{
-  "movieId": 550
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "commentDeleted": true
-}
-```
-
-**Response (404 Not Found):**
-```json
-{
-  "success": false,
-  "message": "Comentario no encontrado."
-}
-```
-
----
-
-### ⭐ Ratings (Protegidas excepto listar)
-
-Las rutas de ratings bajo `/api/movies` requieren autenticación para crear/eliminar.
-
-**Headers requeridos (para POST/DELETE):**
-```
-Authorization: Bearer <token>
-```
-
----
-
-#### `GET /api/movies/get-ratings/:movieId`
-
-Obtiene estadísticas de calificaciones de una película.
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "ratings": {
-    "totalCount": 1250
-  },
-  "ratingNumbers": {
-    "data": [50, 100, 200, 400, 500]
-  }
-}
-```
-
-**Nota:** `ratingNumbers.data` contiene el conteo de cada calificación de 1⭐ a 5⭐.
-
----
-
-#### `POST /api/movies/add-rating`
-
-Agrega o actualiza una calificación a una película.
-
-**Request Body:**
-```json
-{
-  "movieId": 550,
-  "rating": 5
-}
-```
-
-**Validaciones:**
-- `rating` debe estar entre 0 y 5
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "ratingCreated": {
-    "movieId": 550,
-    "userId": "uuid",
-    "rating": 5
-  }
-}
-```
-
-**Nota:** Si el usuario ya calificó la película, se actualiza la calificación existente.
-
----
-
-#### `DELETE /api/movies/delete-rating`
-
-Elimina una calificación de una película.
-
-**Request Body:**
-```json
-{
-  "movieId": 550
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "ratingDeleted": true
-}
-```
-
-**Response (404 Not Found):**
-```json
-{
-  "success": false,
-  "message": "Calificación no encontrada."
-}
-```
-
----
-
-## 📜 Scripts Disponibles
-
-| Script         | Descripción                                    |
-| -------------- | ---------------------------------------------- |
-| `npm run dev`  | Inicia el servidor en modo desarrollo         |
-| `npm run build`| Compila TypeScript a JavaScript               |
-| `npm start`    | Inicia el servidor compilado (producción)     |
-| `npm run lint` | Ejecuta ESLint para validar el código        |
-
----
-
-## 🏛️ Arquitectura
-
-Este proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades:
-
-### Capas Implementadas
-
-1. **Presentation Layer (Routes + Controllers)**
-   - Manejo de HTTP requests/responses
-   - Validación de entrada
-   - Delegación de lógica
-
-2. **Business Logic Layer (Services)**
-   - Integración con APIs externas (Resend, etc.)
-   - Orquestación de operaciones complejas
-
-3. **Data Access Layer (DAOs)**
-   - Abstracción de base de datos
-   - BaseDAO genérico con CRUD
-   - DAOs específicos con queries custom
-
-4. **Database Layer (Supabase/PostgreSQL)**
-   - Almacenamiento persistente
-   - Row Level Security (RLS)
-   - Constraints y validaciones
-
-### Flujo de una Request
-
-```
-Client → Route → Middleware → Controller → DAO → Supabase → Database
-                    ↓
-                Logger, Auth, ErrorHandler
-```
-
-Para arquitectura detallada y patrones de diseño, consulta [ARCHITECTURE.md](./ARCHITECTURE.md).
-
----
-
-## 🤝 Contribuir
-
-1. Haz un fork del proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commitea tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📝 Notas Importantes
-
-### TypeScript y ESM
-
-Este proyecto usa:
-- `"type": "module"` en `package.json` (ES Modules)
+**Configuración:**
+- `"type": "module"` en `package.json`
 - `moduleResolution: "Node"` en `tsconfig.json`
 
-### Supabase
+**Ventajas:**
+- Estándar moderno de JavaScript
+- Mejor tree-shaking
+- Sintaxis import/export consistente
 
-- ⚠️ **NUNCA** expongas el `service_role_key` en el frontend
-- Usa el `anon key` en el cliente (frontend)
-- El `service_role_key` bypasea las políticas RLS de Supabase
+### 3. Email Service (Resend) para mensajería transaccional
 
-### Seguridad
+**Razón:**
+- Separa la lógica de integración con el proveedor de email
+- Facilita el testing mediante mocks
+- Permite cambiar de proveedor sin afectar controladores
+- Centraliza configuración y plantillas de email
 
-**Implementadas:**
+**Casos de uso:**
+- Recuperación de contraseña (reset password link)
+- Emails transaccionales generales
 
-- ✅ **Contraseñas hasheadas** con bcrypt (10 salt rounds)
-- ✅ **JWT con expiración** (24h para access, 1h para reset)
-- ✅ **Rate limiting** en login (3-5 intentos/5min)
-- ✅ **Validación robusta** de inputs (email, password, age)
-- ✅ **CORS configurado** correctamente
-- ✅ **Cookies seguras** (httpOnly, secure en producción)
-- ✅ **Soft delete** (no eliminación física)
-- ✅ **Reset password con JTI** (previene reutilización de tokens)
+**Ventajas:**
+- Un solo lugar para cambiar el proveedor de email
+- Fácil mockear en tests
+- Plantillas centralizadas en `emailTemplates.ts`
 
-**Recomendaciones adicionales:**
+### 4. tsx en lugar de ts-node
 
-- 🔧 Agregar Helmet.js para headers de seguridad
-- 🔧 Implementar refresh tokens
-- 🔧 2FA (Two-Factor Authentication)
-- 🔧 Account lockout tras múltiples intentos fallidos
+**Razón:**
+- `ts-node` tiene problemas con ESM
+- `tsx` es más rápido y maneja ESM perfectamente
+- No requiere extensiones `.js` en imports
 
----
+### 5. Supabase sobre ORM tradicional
 
-## 📄 Licencia
+**Ventajas:**
+- Backend-as-a-Service completo
+- Cliente JavaScript nativo
+- Realtime integrado
+- Menos boilerplate que Prisma/TypeORM
 
-ISC License
+**Trade-off:**
+- Vendor lock-in (pero PostgreSQL estándar debajo)
 
----
+### 6. DAO Pattern sobre Active Record
 
-## 🐛 Soporte
-
-Si encuentras algún bug o tienes alguna pregunta, por favor abre un [issue](https://github.com/Sheimsito/airfilms-server/issues).
-
----
-
-## 📊 Estado del Proyecto
-
-### ✅ Completado
-
-- [x] Sistema de autenticación completo
-- [x] Gestión de usuarios (CRUD)
-- [x] Recuperación de contraseña por email
-- [x] JWT authentication + refresh
-- [x] Rate limiting
-- [x] Error handling centralizado
-- [x] Logging de requests
-- [x] Soft delete
-- [x] Validación de inputs
-- [x] TypeScript setup completo
-- [x] Integración con TMDB API
-- [x] Integración con Pexels API
-- [x] Sistema de películas (búsqueda, detalles, populares)
-- [x] Sistema de favoritos (agregar, eliminar, listar)
-- [x] Sistema de comentarios (agregar, eliminar, listar con paginación)
-- [x] Sistema de ratings (agregar, eliminar, estadísticas con distribución)
-- [x] Documentación (README + ARCHITECTURE)
-
-### 🚧 En Desarrollo
-
-- [ ] Refactorización de endpoints GET (usar query params en lugar de body)
-- [ ] Validación mejorada con Joi/Zod
-- [ ] Cache para APIs externas
-- [ ] Paginación avanzada
-- [ ] Búsqueda y filtros avanzados
-- [ ] Moderación de comentarios
-
-### 📝 Roadmap Futuro
-
-- [ ] WebSockets para notificaciones en tiempo real
-- [ ] Sistema de recomendaciones
-- [ ] Upload de imágenes de perfil
-- [ ] 2FA (Two-Factor Authentication)
-- [ ] Refresh tokens
-- [ ] Tests unitarios y de integración
-- [ ] CI/CD pipeline
-- [ ] Docker containerization
+**Razón:**
+- Mejor separación de responsabilidades
+- Más fácil de testear (mocking)
+- No mezcla lógica de negocio con persistencia
 
 ---
 
-## 🎯 Testing
+## 🔐 Seguridad
 
-Para probar los endpoints, puedes usar:
+### Implementadas
 
-- **Postman:** Importa la collection desde la documentación
-- **Thunder Client:** Extension de VSCode
-- **curl:** Comandos desde terminal
+✅ **Variables de entorno para secrets**  
+✅ **CORS configurado** (múltiples orígenes, credentials habilitados)  
+✅ **Express JSON body parser** (límite de 10mb)  
+✅ **Hash de contraseñas** (bcrypt con 10 salt rounds)  
+✅ **Rate limiting** (express-rate-limit en login: 3-5 intentos/5min)  
+✅ **JWT authentication** (tokens con expiración de 24h)  
+✅ **Validación de input** (validación manual en controllers)  
+✅ **SQL injection prevention** (Supabase maneja prepared statements)  
+✅ **Middleware de autenticación** (verifica JWT en rutas protegidas)  
+✅ **Soft delete** (no elimina datos físicamente)  
+✅ **Cookie seguras** (httpOnly, secure en producción, sameSite)
 
-Ejemplo con curl:
+### Medidas de Seguridad Específicas
 
-```bash
-# Registro
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","lastName":"User","age":25,"email":"test@test.com","password":"Test123!"}'
+**Contraseñas:**
+- Hash con bcrypt (10 salt rounds)
+- Validación: mínimo 8 caracteres, mayúscula, minúscula, número, carácter especial
+- Nunca retornadas en responses
 
-# Login
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"Test123!"}'
+**JWT:**
+- Tokens firmados con secret seguro
+- Expiración de 24h para access tokens
+- Expiración de 1h para reset password tokens
+- JTI (JWT ID) único para reset tokens (previene reutilización)
 
-# Get Profile (con token)
-curl -X GET http://localhost:5000/api/users/profile \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
-```
+**Rate Limiting:**
+- Login: 3-5 intentos por 5 minutos
+- Skip en desarrollo para facilitar testing
+- Headers estándar de rate limit incluidos
+
+**CORS:**
+- Lista blanca de orígenes permitidos
+- Credentials habilitados para cookies
+- En desarrollo: permite todos los orígenes
+
+### Pendientes
+
+⚠️ Helmet.js para headers de seguridad  
+⚠️ Input sanitization (DOMPurify para contenido HTML)  
+⚠️ CSRF protection  
+⚠️ Refresh tokens (para sessions de larga duración)  
+⚠️ Account lockout después de múltiples intentos fallidos
 
 ---
 
-**Desarrollado con ❤️ y TypeScript**
+## 📊 Componentes Implementados
 
-**Última actualización:** Enero 2025  
-**Versión:** 1.8.0  
-**Estado:** Production Ready (Auth, Users, Movies, Favorites, Comments & Ratings)
+| Componente            | Descripción                                                        | Estado          |
+|-----------------------|--------------------------------------------------------------------|-----------------|
+| **AuthController**    | Registro, login, logout, forgot/reset password, verify auth        | ✅ Implementado |
+| **UserController**    | Perfil, actualización, soft delete                                 | ✅ Implementado |
+| **BaseDAO**           | CRUD genérico + soft delete                                        | ✅ Implementado |
+| **UserDAO**           | Operaciones específicas de usuarios                                | ✅ Implementado |
+| **Auth Middleware**   | JWT verification + rate limiting                                   | ✅ Implementado |
+| **Error Handler**     | Manejo de errores Supabase/PostgreSQL                              | ✅ Implementado |
+| **Logger Middleware** | Logging de requests/responses                                      | ✅ Implementado |
+| **NotFound Middleware** | Manejo de rutas 404                                             | ✅ Implementado |
+| **Resend Service**    | Envío de emails transaccionales (recuperación de contraseña, etc.) | ✅ Implementado |
 
+---
+
+## 📚 Recursos Adicionales
+
+- [Express Best Practices](https://expressjs.com/en/advanced/best-practice-security.html)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [Resend Documentation](https://resend.com/docs)
+
+---
+
+**Última actualización:** Mayo 2026  
+**Versión de arquitectura:** 1.0  
+**Estado:** Producción Ready (Auth & Users)
