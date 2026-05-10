@@ -35,9 +35,9 @@ const config: Config = {
     jwtResetPasswordSecret: process.env.JWT_RESET_PASSWORD_SECRET || "your_jwt_reset_password_secret",
     resendApiKey: process.env.RESEND_API_KEY || "",
     emailToSend: process.env.EMAIL_TO_SEND || "",
-    appName: process.env.APP_NAME || "Airfilms",
-    logoUrl: process.env.LOGO_URL || "https://air-films-fend.vercel.app/AirFilms.png",
-    supportEmail: process.env.SUPPORT_EMAIL || "support@airfilms.com"
+    appName: process.env.APP_NAME || "BrioBox",
+    logoUrl: process.env.LOGO_URL || "https://instagram.fclo12-1.fna.fbcdn.net/v/t51.82787-19/622439008_18189881377345639_7755046128322320629_n.jpg?stp=dst-jpg_s150x150_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fclo12-1.fna.fbcdn.net&_nc_cat=107&_nc_oc=Q6cZ2gHGN10EsPjZO86ElY2bTnKruXgfpNdctkv9HVdrsN07rlEUVjqW7TnYD0dUGJ6iE6hPr7mVR6qPDUKjeU4f8xY3&_nc_ohc=gsIj1RxH6H8Q7kNvwHrW1GN&_nc_gid=2KdjvupR-1WcVvoPU8I-OA&edm=AP4sbd4BAAAA&ccb=7-5&oh=00_Af483J6mt24BLYHstCUkOdwTG6UxAxyA-S5tgIcSFx9yVQ&oe=6A06C10A&_nc_sid=7a9f4b",
+    supportEmail: process.env.SUPPORT_EMAIL || "support@briobox.com"
     
 }
 

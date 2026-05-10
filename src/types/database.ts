@@ -6,8 +6,6 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          lastName: string;
-          age: number;
           email: string;
           password: string;
           resetPasswordJti: string;
@@ -17,18 +15,46 @@ export interface Database {
         };
         Insert: {
           name: string;
+          email: string;
+          password: string;
+        };
+        Update: {
+          name?: string;
+          email?: string;
+          password?: string;
+          resetPasswordJti?: string;
+          isDeleted?: boolean;
+        };
+      };
+
+      clients: {
+        Row: {
+          id: string;
+          name: string;
           lastName: string;
           age: number;
           email: string;
-          password: string;
+          phoneNumber: string;
+          address: string;
+          isDeleted: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+        Insert: {
+          name: string;
+          lastName: string;
+          age: number;
+          email: string;
+          phoneNumber: string;
+          address: string;
         };
         Update: {
           name?: string;
           lastName?: string;
           age?: number;
           email?: string;
-          password?: string;
-          resetPasswordJti?: string;
+          phoneNumber?: string;
+          address?: string;
           isDeleted?: boolean;
         };
       };
@@ -42,6 +68,11 @@ export interface Database {
 export type UserRow = Database['public']['Tables']['users']['Row'];
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
+
+// Client
+export type ClientRow = Database['public']['Tables']['clients']['Row'];
+export type ClientInsert = Database['public']['Tables']['clients']['Insert'];
+export type ClientUpdate = Database['public']['Tables']['clients']['Update'];
 
 
 

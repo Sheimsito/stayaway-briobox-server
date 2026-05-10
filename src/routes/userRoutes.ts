@@ -5,14 +5,16 @@ const router = Router();
 
 // Note: All routes here are already protected by authenticateToken in routes/index.ts
 
-// Get user profile
-router.get("/profile", userController.getUserProfile);
+// Get client profile
+router.get("/client", userController.getClientProfile);
 
-// Update user profile
-router.put("/profile", userController.updateUserProfile);
+// Update client profile
+router.put("/client", userController.updateClient);
 
-// Soft delete user profile
-router.delete("/profile", userController.softDeleteAccount); 
+// Soft delete client profile
+router.delete("/client", userController.softDeleteAccount); 
 
+// Create a new client
+router.post("/client", userController.createClient);
 
 export default router;

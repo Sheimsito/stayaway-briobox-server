@@ -28,7 +28,7 @@ export const emailTemplates: Record<string, string> = {
         }
         .header { 
           background: #101010ff; 
-          color: #FF8C00;
+          color: #ff0000ff;
           font-weight: 600;
           padding: 30px 20px; 
           text-align: center; 
@@ -42,7 +42,7 @@ export const emailTemplates: Record<string, string> = {
         .header h1 { 
           margin: 0; 
           font-size: 28px; 
-          color: #FF8C00;
+          color: #ff4800ff;
           font-weight: 600; 
         }
         .header p { 
@@ -59,7 +59,7 @@ export const emailTemplates: Record<string, string> = {
         }
         .button { 
           display: inline-block; 
-          background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%); 
+          background: linear-gradient(135deg, #790000ff 0%, #FF4500 100%); 
           color: #1A1A1A !important; 
           padding: 16px 32px; 
           text-decoration: none; 
@@ -74,7 +74,7 @@ export const emailTemplates: Record<string, string> = {
         }
         .warning { 
           background: #fff8e1; 
-          border-left: 4px solid #FF8C00; 
+          border-left: 4px solid #ff0000ff; 
           padding: 20px; 
           margin: 25px 0; 
           border-radius: 4px; 
@@ -151,7 +151,7 @@ export const emailTemplates: Record<string, string> = {
         <div class="footer">
           <img src="{{LOGO_URL}}" alt="{{APP_NAME}}" class="footer-logo" />
           <p><strong>{{APP_NAME}}</strong></p>
-          <p>Tu plataforma de películas favorita para verlas en streaming</p>
+          <p>Tu plataforma para la gestión de tu gimnasio</p>
           <p>Este email fue generado automáticamente, por favor no responder.</p>
           <p>&copy; {{CURRENT_YEAR}} - Todos los derechos reservados</p>
         </div>

@@ -7,8 +7,6 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = Router();
 
-// Create a new user
-router.post("/register", authController.register);
 
 // Login a user
 router.post("/login", rateLimiter, authController.login);

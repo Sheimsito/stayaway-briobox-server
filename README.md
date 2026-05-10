@@ -371,8 +371,7 @@ export type UserUpdate = Database['public']['Tables']['users']['Update'];
 | isDeleted         | BOOLEAN   | Soft delete flag                        |
 | createdAt         | TIMESTAMP | Fecha de creación                       |
 | updatedAt         | TIMESTAMP | Fecha de última actualización           |
-  phone
-  role
+
 ### Conexión
 
 ```typescript
@@ -530,5 +529,3 @@ export const supabaseGeneric = createClient(url, key);
 **Última actualización:** Mayo 2026  
 **Versión de arquitectura:** 1.0  
 **Estado:** Producción Ready (Auth & Users)
-
-
