@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "module": "node16",
+    "module": "commonjs",
     "target": "ESNext",
     "esModuleInterop": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
     "skipLibCheck": true,
     "strict": true,
     "sourceMap": true,
