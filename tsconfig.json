@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "node16",
     "target": "ESNext",
     "esModuleInterop": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node16",
     "skipLibCheck": true,
     "strict": true,
     "sourceMap": true,
