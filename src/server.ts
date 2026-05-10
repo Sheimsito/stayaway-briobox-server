@@ -18,7 +18,7 @@ app.use(cookieParser());
 app.get('/', (req: Request, res: Response) => {
     res.status(200).json({
         success: true,
-        message: 'Airfilms API - Servidor funcionando correctamente',
+        message: 'BrioBox API - Servidor funcionando correctamente',
         timestamp: new Date().toISOString(),
         environment: config.nodeEnv,
         apiBase: `${req.protocol}://${req.get('host')}${config.apiPrefix}`,
