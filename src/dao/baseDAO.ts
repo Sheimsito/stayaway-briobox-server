@@ -90,7 +90,7 @@ export class BaseDAO<Row, Insert, Update> {
     const { error } = await supabase
       .from(this.table)
       // @ts-ignore
-      .update({ isDeleted: true })
+      .update({ is_deleted: true })
       .eq('id', id);
     if (error) throw new Error(`[${this.table}] softDeleteById: ${error.message}`);
     return true;
