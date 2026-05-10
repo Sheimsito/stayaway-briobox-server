@@ -30,32 +30,38 @@ export interface Database {
       clients: {
         Row: {
           id: string;
-          name: string;
-          lastName: string;
+          first_name: string;
+          second_name: string;
+          mom_last_name: string;
+          dad_last_name: string;
           age: number;
           email: string;
-          phoneNumber: string;
+          phone: string;
           address: string;
-          isDeleted: boolean;
-          createdAt: Date;
-          updatedAt: Date;
+          is_deleted: boolean;
+          created_at: Date;
+          updated_at: Date;
         };
         Insert: {
-          name: string;
-          lastName: string;
+          first_name: string;
+          second_name: string;
+          mom_last_name: string;
+          dad_last_name: string;
           age: number;
           email: string;
-          phoneNumber: string;
+          phone: string;
           address: string;
         };
         Update: {
-          name?: string;
-          lastName?: string;
+          first_name?: string;
+          second_name?: string;
+          mom_last_name?: string;
+          dad_last_name?: string;
           age?: number;
           email?: string;
-          phoneNumber?: string;
+          phone?: string;
           address?: string;
-          isDeleted?: boolean;
+          is_deleted?: boolean;
         };
       };
     };

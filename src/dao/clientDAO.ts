@@ -38,15 +38,15 @@ export class ClientDAO extends BaseDAO<ClientRow, ClientInsert, ClientUpdate> {
     return (data as ClientRow | null) ?? null;
   }
 
-  async findByPhoneNumber(phoneNumber: string): Promise<ClientRow | null> {
+  async findByPhoneNumber(phone: string): Promise<ClientRow | null> {
     const { data, error } = await supabase
       .from('clients')
       .select('*') // mejor evitar '*'
-      .eq('phoneNumber', phoneNumber)
+      .eq('phone', phone)
       .maybeSingle();
 
     if (error) {
-      console.error(`[ClientDAO] findByPhoneNumber failed for ${phoneNumber}:`, error.message);
+      console.error(`[ClientDAO] findByPhoneNumber failed for ${phone}:`, error.message);
       throw new Error(`[clients] findByPhoneNumber: ${error.message}`);
     }
 
@@ -65,6 +65,24 @@ export class ClientDAO extends BaseDAO<ClientRow, ClientInsert, ClientUpdate> {
       throw new Error(`[clients] updateResetPasswordJti: ${error.message}`);
     }
   }
+}
+
+export const findAllClients = async (page: number = 1, limit: number = 10): Promise<{ clients: ClientRow[], total: number }> => {
+  const offset = (page - 1) * limit;
+  const { data, error, count } = await supabase
+    .from('clients')
+    .select('id, first_name, dad_last_name', { count: 'exact' })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error(`[ClientDAO] findAllClients failed:`, error.message);
+    throw new Error(`[clients] findAllClients: ${error.message}`);
+  }
+
+  return {
+    clients: (data as ClientRow[]) ?? [],
+    total: count ?? 0
+  };
 }
 
 export const clientDAO = new ClientDAO();

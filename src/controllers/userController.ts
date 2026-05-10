@@ -1,4 +1,4 @@
-import { clientDAO } from "../dao/clientDAO";
+import { clientDAO, findAllClients } from "../dao/clientDAO";
 import { Request, Response } from "express";
 import config from "../config/config.js";
 import bcrypt from "bcrypt";
@@ -15,9 +15,9 @@ interface UserProfileRequest {
 
 const createClient = async(req: Request, res: Response) => {
   try{
-    const { name, lastName, age, email, phoneNumber, address } = req.body;
+    const { first_name, second_name, mom_last_name, dad_last_name, age, email, phone, address } = req.body;
     // Validate required fields
-    if (!name || !lastName || !age || !email || !phoneNumber || !address) {
+    if (!first_name || !second_name || !mom_last_name || !dad_last_name || !age || !email || !phone || !address) {
       return res.status(400).json({ message: "Todos los campos son obligatorios." });
     }
     // Validate age
@@ -31,7 +31,7 @@ const createClient = async(req: Request, res: Response) => {
     }
     // Validate phone number format
     const phoneRule: RegExp = /^[0-9]{10}$/;
-    if (!phoneRule.test(phoneNumber)) {
+    if (!phoneRule.test(phone)) {
       return res.status(400).json({ message: "El formato del número de teléfono no es válido" });
     }
     // Validate if user already exists
@@ -40,12 +40,21 @@ const createClient = async(req: Request, res: Response) => {
       return res.status(409).json({ message: "Este correo ya está registrado." });
     }
     // Validate if user already exists
-    const existingUserByPhone = await clientDAO.findByPhoneNumber(phoneNumber);
+    const existingUserByPhone = await clientDAO.findByPhoneNumber(phone);
     if (existingUserByPhone !== null) {
       return res.status(409).json({ message: "Este número de teléfono ya está registrado." });
     }
     // Create user in database if all validation passes
-    const user = await clientDAO.create({ name, lastName, age, email, phoneNumber, address });
+    const user = await clientDAO.create({ 
+      first_name: first_name, 
+      second_name: second_name, 
+      mom_last_name: mom_last_name, 
+      dad_last_name: dad_last_name, 
+      age: age, 
+      email: email, 
+      phone: phone, 
+      address: address 
+    });
     res.status(201).json({ userId: user.id });
 
     } catch (error: unknown) {
@@ -71,7 +80,7 @@ const createClient = async(req: Request, res: Response) => {
  */
 const getClientProfile = async (req: any, res: Response) => {
     try {
-      const clientId: string = req.user?.userId;
+      const clientId: string = req.params.id;
   
         const clientProfile = await clientDAO.findById(clientId);
   
@@ -85,6 +94,36 @@ const getClientProfile = async (req: any, res: Response) => {
       res.status(200).json({
         success: true,
         user: clientProfile
+      });
+    } catch (err: unknown) {
+      if (config.nodeEnv === "development") {
+        console.error(err instanceof Error ? err.message : "Error interno del servidor");
+      }
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor." , err: err instanceof Error ? err.message : "Error interno del servidor"
+      });
+    }
+  };
+
+
+
+const getAllClients = async (req: any, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const { clients, total } = await findAllClients(page, limit);
+      
+      res.status(200).json({
+        success: true,
+        users: clients,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
       });
     } catch (err: unknown) {
       if (config.nodeEnv === "development") {
@@ -122,8 +161,8 @@ interface UpdateClient {
  */
 const updateClient = async (req: any, res: Response) => {
     try {
-      const clientId = req.user?.userId;
-      const { name, lastName, age, email, phoneNumber, address } = req.body;
+      const clientId = req.params.id;
+      const { first_name, second_name, mom_last_name, dad_last_name, age, email, phone, address } = req.body;
   
       // Verify that the user exists
       const existingUser = await clientDAO.findById(clientId);
@@ -144,14 +183,26 @@ const updateClient = async (req: any, res: Response) => {
           });
         }
       }
+
+      if (phone && phone !== existingUser.phone) {
+        const phoneExists = await clientDAO.findByPhoneNumber(phone);
+        if (phoneExists) {
+          return res.status(400).json({
+            success: false,
+            message: "Este número de teléfono ya está registrado por otro usuario."
+          });
+        }
+      }
   
       // Update client 
       const updatedUser = await clientDAO.updateById(clientId, {
-        name: name,
-        lastName: lastName,
+        first_name: first_name,
+        second_name: second_name,
+        mom_last_name: mom_last_name,
+        dad_last_name: dad_last_name,
         age: age,
         email: email,
-        phoneNumber: phoneNumber,
+        phone: phone,
         address: address
       });
   
@@ -202,9 +253,16 @@ interface DeleteClientRequest {
  */
 const softDeleteAccount = async (req: any, res: Response) => {
     try {
-      const clientId = req.user?.userId;
+      const clientId = req.params.id;
   
-
+      // Verify that the user exists
+      const existingUser = await clientDAO.findById(clientId);
+      if (!existingUser) {
+        return res.status(404).json({
+          success: false,
+          message: "Cliente no encontrado."
+        });
+      }
       // Soft delete the user account
       const deleted: boolean = await clientDAO.softDeleteById(clientId);
       if (!deleted) {
@@ -230,4 +288,4 @@ const softDeleteAccount = async (req: any, res: Response) => {
   };
 
 
-export default { createClient, getClientProfile, updateClient, softDeleteAccount };
+export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount };
