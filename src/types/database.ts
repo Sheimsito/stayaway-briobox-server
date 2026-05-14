@@ -30,10 +30,7 @@ export interface Database {
       clients: {
         Row: {
           id: string;
-          first_name: string;
-          second_name: string;
-          mom_last_name: string;
-          dad_last_name: string;
+          full_name: string;
           age: number;
           email: string;
           phone: string;
@@ -43,20 +40,14 @@ export interface Database {
           updated_at: Date;
         };
         Insert: {
-          first_name: string;
-          second_name: string;
-          mom_last_name: string;
-          dad_last_name: string;
+          full_name: string;
           age: number;
           email: string;
           phone: string;
           address: string;
         };
         Update: {
-          first_name?: string;
-          second_name?: string;
-          mom_last_name?: string;
-          dad_last_name?: string;
+          full_name?: string;
           age?: number;
           email?: string;
           phone?: string;

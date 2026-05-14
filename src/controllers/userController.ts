@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 
 interface UserProfileRequest {
-    userId: string;
+  userId: string;
 }
 
 
@@ -13,11 +13,11 @@ interface UserProfileRequest {
  * Create User 
  */
 
-const createClient = async(req: Request, res: Response) => {
-  try{
-    const { first_name, second_name, mom_last_name, dad_last_name, age, email, phone, address } = req.body;
+const createClient = async (req: Request, res: Response) => {
+  try {
+    const { full_name, age, email, phone, address } = req.body;
     // Validate required fields
-    if (!first_name || !second_name || !mom_last_name || !dad_last_name || !age || !email || !phone || !address) {
+    if (!full_name || !age || !email || !phone || !address) {
       return res.status(400).json({ message: "Todos los campos son obligatorios." });
     }
     // Validate age
@@ -45,22 +45,19 @@ const createClient = async(req: Request, res: Response) => {
       return res.status(409).json({ message: "Este número de teléfono ya está registrado." });
     }
     // Create user in database if all validation passes
-    const user = await clientDAO.create({ 
-      first_name: first_name, 
-      second_name: second_name, 
-      mom_last_name: mom_last_name, 
-      dad_last_name: dad_last_name, 
-      age: age, 
-      email: email, 
-      phone: phone, 
-      address: address 
+    const user = await clientDAO.create({
+      full_name: full_name,
+      age: age,
+      email: email,
+      phone: phone,
+      address: address
     });
     res.status(201).json({ userId: user.id });
 
-    } catch (error: unknown) {
-      // If error is an instance of Error, return the message
-      res.status(400).json({ message: error instanceof Error ? error.message : "Error interno del servidor"});
-    }
+  } catch (error: unknown) {
+    // If error is an instance of Error, return the message
+    res.status(400).json({ message: error instanceof Error ? error.message : "Error interno del servidor" });
+  }
 }
 
 /**
@@ -79,71 +76,71 @@ const createClient = async(req: Request, res: Response) => {
  * if an internal error occurs.
  */
 const getClientProfile = async (req: any, res: Response) => {
-    try {
-      const clientId: string = req.params.id;
-  
-        const clientProfile = await clientDAO.findById(clientId);
-  
-      if (!clientProfile) {
-        return res.status(404).json({
-          success: false,
-          message: "Cliente no encontrado."
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        user: clientProfile
-      });
-    } catch (err: unknown) {
-      if (config.nodeEnv === "development") {
-        console.error(err instanceof Error ? err.message : "Error interno del servidor");
-      }
-      res.status(500).json({
+  try {
+    const clientId: string = req.params.id;
+
+    const clientProfile = await clientDAO.findById(clientId);
+
+    if (!clientProfile) {
+      return res.status(404).json({
         success: false,
-        message: "Error interno del servidor." , err: err instanceof Error ? err.message : "Error interno del servidor"
+        message: "Cliente no encontrado."
       });
     }
-  };
+
+    res.status(200).json({
+      success: true,
+      user: clientProfile
+    });
+  } catch (err: unknown) {
+    if (config.nodeEnv === "development") {
+      console.error(err instanceof Error ? err.message : "Error interno del servidor");
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor.", err: err instanceof Error ? err.message : "Error interno del servidor"
+    });
+  }
+};
 
 
 
 const getAllClients = async (req: any, res: Response) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      
-      const { clients, total } = await findAllClients(page, limit);
-      
-      res.status(200).json({
-        success: true,
-        users: clients,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit)
-        }
-      });
-    } catch (err: unknown) {
-      if (config.nodeEnv === "development") {
-        console.error(err instanceof Error ? err.message : "Error interno del servidor");
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const { clients, total } = await findAllClients(page, limit);
+
+    res.status(200).json({
+      success: true,
+      users: clients,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
       }
-      res.status(500).json({
-        success: false,
-        message: "Error interno del servidor." , err: err instanceof Error ? err.message : "Error interno del servidor"
-      });
+    });
+  } catch (err: unknown) {
+    if (config.nodeEnv === "development") {
+      console.error(err instanceof Error ? err.message : "Error interno del servidor");
     }
-  };
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor.", err: err instanceof Error ? err.message : "Error interno del servidor"
+    });
+  }
+};
 
 interface UpdateClient {
-    clientId: string;
-    name: string;
-    lastName: string;
-    age: number;
-    email: string;
-    phoneNumber: string;
-    address: string;
+  clientId: string;
+  name: string;
+  lastName: string;
+  age: number;
+  email: string;
+  phoneNumber: string;
+  address: string;
 }
 
 /**
@@ -160,84 +157,81 @@ interface UpdateClient {
  *  - 500: `{ success: false, message: error.message }`if an internal error occurs.
  */
 const updateClient = async (req: any, res: Response) => {
-    try {
-      const clientId = req.params.id;
-      const { first_name, second_name, mom_last_name, dad_last_name, age, email, phone, address } = req.body;
-  
-      // Verify that the user exists
-      const existingUser = await clientDAO.findById(clientId);
-      if (!existingUser) {
-        return res.status(404).json({
-          success: false,
-          message: "Cliente no encontrado."
-        });
-      }
-  
-      // Check if the email already exists for another user
-      if (email && email !== existingUser.email) {
-        const emailExists = await clientDAO.findByEmail(email);
-        if (emailExists) {
-          return res.status(400).json({
-            success: false,
-            message: "Este correo ya está registrado por otro usuario."
-          });
-        }
-      }
+  try {
+    const clientId = req.params.id;
+    const { full_name, age, email, phone, address } = req.body;
 
-      if (phone && phone !== existingUser.phone) {
-        const phoneExists = await clientDAO.findByPhoneNumber(phone);
-        if (phoneExists) {
-          return res.status(400).json({
-            success: false,
-            message: "Este número de teléfono ya está registrado por otro usuario."
-          });
-        }
-      }
-  
-      // Update client 
-      const updatedUser = await clientDAO.updateById(clientId, {
-        first_name: first_name,
-        second_name: second_name,
-        mom_last_name: mom_last_name,
-        dad_last_name: dad_last_name,
-        age: age,
-        email: email,
-        phone: phone,
-        address: address
-      });
-  
-      if (!updatedUser) {
-        return res.status(404).json({
-          success: false,
-          message: "Cliente no encontrado."
-        });
-      }
-  
-      // Get the updated profile (without sensitive data)
-      const userProfile = await clientDAO.findById(clientId);
-  
-      res.status(200).json({
-        success: true,
-        user: userProfile,
-        message: "Usuario actualizado exitosamente."
-      });
-    } catch (err: unknown) {
-      if (config.nodeEnv === "development") {
-        console.error(err instanceof Error ? err.message : "Error interno del servidor");
-      }
-      res.status(500).json({
+    // Verify that the user exists
+    const existingUser = await clientDAO.findById(clientId);
+    if (!existingUser) {
+      return res.status(404).json({
         success: false,
-        message: "Error interno del servidor." , err: err instanceof Error ? err.message : "Error interno del servidor"
+        message: "Cliente no encontrado."
       });
     }
-    
-  };
+
+    // Check if the email already exists for another user
+    if (email && email !== existingUser.email) {
+      const emailExists = await clientDAO.findByEmail(email);
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Este correo ya está registrado por otro usuario."
+        });
+      }
+    }
+
+    if (phone && phone !== existingUser.phone) {
+      const phoneExists = await clientDAO.findByPhoneNumber(phone);
+      if (phoneExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Este número de teléfono ya está registrado por otro usuario."
+        });
+      }
+    }
+
+    // Update client 
+    const updatedUser = await clientDAO.updateById(clientId, {
+      full_name: full_name,
+      age: age,
+      email: email,
+      phone: phone,
+      address: address
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Cliente no encontrado."
+      });
+    }
+
+    // Get the updated profile (without sensitive data)
+    const userProfile = await clientDAO.findById(clientId);
+
+    res.status(200).json({
+      success: true,
+      user: userProfile,
+      message: "Usuario actualizado exitosamente."
+    });
+  } catch (err: unknown) {
+    if (config.nodeEnv === "development") {
+      console.error(err instanceof Error ? err.message : "Error interno del servidor");
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor.", err: err instanceof Error ? err.message : "Error interno del servidor"
+    });
+  }
+
+};
 
 
 
 
 interface DeleteClientRequest {
-    userId: string;
+  userId: string;
 }
 
 /**
@@ -252,40 +246,40 @@ interface DeleteClientRequest {
  *  - 500: `{ success: false, message: "Error interno del servidor." }` if an internal error occurs.
  */
 const softDeleteAccount = async (req: any, res: Response) => {
-    try {
-      const clientId = req.params.id;
-  
-      // Verify that the user exists
-      const existingUser = await clientDAO.findById(clientId);
-      if (!existingUser) {
-        return res.status(404).json({
-          success: false,
-          message: "Cliente no encontrado."
-        });
-      }
-      // Soft delete the user account
-      const deleted: boolean = await clientDAO.softDeleteById(clientId);
-      if (!deleted) {
-        return res.status(404).json({ success: false, message: "Usuario no encontrado o ya eliminado." });
-      }
-  
-      const isProduction: boolean = config.nodeEnv === 'production';
-      res.clearCookie("access_token", {
-        httpOnly: false,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        path: "/",
+  try {
+    const clientId = req.params.id;
+
+    // Verify that the user exists
+    const existingUser = await clientDAO.findById(clientId);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Cliente no encontrado."
       });
-      
-  
-      return res.status(200).json({ success: true, message: "Cuenta eliminada." });
-    } catch (err: unknown) {
-      if (config.nodeEnv === "development") {
-        console.error(err);
-      }
-      res.status(500).json({ success: false, message: "Error interno del servidor." });
     }
-  };
+    // Soft delete the user account
+    const deleted: boolean = await clientDAO.softDeleteById(clientId);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Usuario no encontrado o ya eliminado." });
+    }
+
+    const isProduction: boolean = config.nodeEnv === 'production';
+    res.clearCookie("access_token", {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+
+
+    return res.status(200).json({ success: true, message: "Cuenta eliminada." });
+  } catch (err: unknown) {
+    if (config.nodeEnv === "development") {
+      console.error(err);
+    }
+    res.status(500).json({ success: false, message: "Error interno del servidor." });
+  }
+};
 
 
 export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount };
