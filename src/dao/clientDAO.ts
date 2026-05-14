@@ -71,7 +71,7 @@ export const findAllClients = async (page: number = 1, limit: number = 10): Prom
   const offset = (page - 1) * limit;
   const { data, error, count } = await supabase
     .from('clients')
-    .select('id, first_name, dad_last_name', { count: 'exact' })
+    .select('id, full_name', { count: 'exact' })
     .range(offset, offset + limit - 1);
 
   if (error) {
