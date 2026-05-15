@@ -16,7 +16,15 @@ const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) 
     const token: string | undefined =
       req.cookies?.access_token ||
       (authHeader && authHeader.split(" ")[1]);
-  
+    
+
+    // Debug Token:
+    console.log("TOKEN: ", token);
+    console.log("AUTH HEADER: ", authHeader);
+    console.log("COOKIES: ", req.cookies);
+    console.log("HEADERS: ", req.headers);
+    console.log("user: ", req.user);
+      
     if (!token) {
       return res.status(401).json({
         success: false,
