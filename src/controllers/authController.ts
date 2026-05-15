@@ -67,6 +67,10 @@ const login = async (req: Request<{}, {}, LoginRequest>, res: Response) => {
                     path: "/"
                 }
         ); 
+        console.log("COOKIE SET");
+        console.log("USER: ", user);
+        console.log("TOKEN: ", token);
+        console.log("HEADERS: ", res.getHeaders());
         return res.status(200).json({ message: "Inicio de sesión exitoso.", token });
 
         
