@@ -31,22 +31,18 @@ interface LoginRequest {
  */
 const login = async (req: Request<{}, {}, LoginRequest>, res: Response) => {
     try {
-        const { email, password } = req.body;
-        console.log(email);
-        console.log(password);
+        const { email, password } = req.body;     
         switch(true) {
             case !email:
                 return res.status(400).json({ message: "El correo es obligatorio." });
             case !password:
                 return res.status(400).json({ message: "La contraseña es obligatoria." });
         }   
-
-        const user = await userDAO.findByEmail(email);
-        console.log(user);
+        const user = await userDAO.findByEmail(email);     
         if(!user) {
             return res.status(401).json({ message: "Correo o contraseña incorrectos." });
         }
-        if (user.isDeleted) {
+        if (user.is_deleted) {
             return res.status(403).json({ message: "Tu cuenta está deshabilitada." });
         }
 

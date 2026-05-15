@@ -9,21 +9,24 @@ export interface Database {
           email: string;
           password: string;
           resetPasswordJti: string;
-          isDeleted: boolean;
-          createdAt: Date;
-          updatedAt: Date;
+          is_deleted: boolean;
+          role: string;
+          created_at: Date;
+          updated_at: Date;
         };
         Insert: {
           name: string;
           email: string;
           password: string;
+          role: string;
         };
         Update: {
           name?: string;
           email?: string;
           password?: string;
           resetPasswordJti?: string;
-          isDeleted?: boolean;
+          is_deleted?: boolean;
+          role?: string;
         };
       };
 

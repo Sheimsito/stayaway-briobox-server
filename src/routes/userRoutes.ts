@@ -21,4 +21,16 @@ router.delete("/customer/:id", userController.softDeleteAccount);
 // Create a new customer
 router.post("/customer", userController.createClient);
 
+// Admin routes
+
+
+// Get user info
+router.get("/user", userController.getUserProfile);
+
+// Update user info
+router.put("/user", userController.updateUserProfile);
+
+// Delete user
+router.delete("/user", userController.softDeleteUserProfile);
+
 export default router;
