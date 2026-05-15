@@ -93,6 +93,7 @@ export class BaseDAO<Row, Insert, Update> {
       .update({ is_deleted: true })
       .eq('id', id);
     if (error) throw new Error(`[${this.table}] softDeleteById: ${error.message}`);
+    console.log("Soft delete id", id, error);
     return true;
   }
 
