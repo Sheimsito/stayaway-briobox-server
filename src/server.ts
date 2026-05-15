@@ -9,6 +9,7 @@ import configureServer from "./config/server.js";
 // initialize the express app
 const app = express();
 
+app.set('trust proxy', 1);
 // configure the server
 configureServer(app);
 
