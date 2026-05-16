@@ -630,4 +630,4 @@ const softDeleteAccount = async (req: any, res: Response) => {
 };
 
 
-export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile };
+export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser };

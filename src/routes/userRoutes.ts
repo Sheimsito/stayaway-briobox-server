@@ -33,4 +33,12 @@ router.put("/user", userController.updateUserProfile);
 // Delete user
 router.delete("/user", userController.softDeleteUserProfile);
 
+
+
+
+// Admin routes
+
+// Create user
+router.post("/user", userController.createUser);
+
 export default router;
