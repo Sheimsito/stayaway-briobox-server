@@ -87,14 +87,11 @@ const createUser = async (req: any, res: Response) => {
       });
     }
 
-    // Create user
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+  
     const user = await userDAO.create({
       name: name,
       email: email,
-      password: hashedPassword,
+      password: password,
       role: role,
     });
 
