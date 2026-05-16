@@ -234,9 +234,9 @@ const softDeleteUserProfile = async (req: any, res: Response) => {
 
 const createClient = async (req: Request, res: Response) => {
   try {
-    const { full_name, age, email, phone, address } = req.body;
+    const { first_name, middle_name, paternal_last_name, maternal_last_name, age, email, phone, address } = req.body;
     // Validate required fields
-    if (!full_name || !age || !email || !phone || !address) {
+    if (!first_name || !middle_name || !paternal_last_name || !maternal_last_name || !age || !email || !phone || !address) {
       return res.status(400).json({ message: "Todos los campos son obligatorios." });
     }
     // Validate age
@@ -265,7 +265,10 @@ const createClient = async (req: Request, res: Response) => {
     }
     // Create user in database if all validation passes
     const user = await clientDAO.create({
-      full_name: full_name,
+      first_name: first_name,
+      middle_name: middle_name,
+      paternal_last_name: paternal_last_name,
+      maternal_last_name: maternal_last_name,
       age: age,
       email: email,
       phone: phone,
@@ -390,7 +393,7 @@ interface UpdateClient {
 const updateClient = async (req: any, res: Response) => {
   try {
     const clientId = req.params.id;
-    const { full_name, age, email, phone, address } = req.body;
+    const { first_name, middle_name, paternal_last_name, maternal_last_name, age, email, phone, address } = req.body;
 
     // Verify that the user exists
     const existingUser = await clientDAO.findById(clientId);
@@ -424,7 +427,10 @@ const updateClient = async (req: any, res: Response) => {
 
     // Update client 
     const updatedUser = await clientDAO.updateById(clientId, {
-      full_name: full_name,
+      first_name: first_name,
+      middle_name: middle_name,
+      paternal_last_name: paternal_last_name,
+      maternal_last_name: maternal_last_name,
       age: age,
       email: email,
       phone: phone,
