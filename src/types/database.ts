@@ -1,3 +1,9 @@
+export enum UserRole {
+  EMPLEADO = 'empleado',
+  ADMIN = 'admin',
+  VISITANTE = 'visitante'
+}
+
 // This is the type for the database for maintaining the consistency of the data
 export interface Database {
   public: {
@@ -10,7 +16,7 @@ export interface Database {
           password: string;
           resetPasswordJti: string;
           is_deleted: boolean;
-          role: string;
+          role: UserRole;
           created_at: Date;
           updated_at: Date;
         };
@@ -18,7 +24,7 @@ export interface Database {
           name: string;
           email: string;
           password: string;
-          role: string;
+          role: UserRole;
         };
         Update: {
           name?: string;
@@ -26,7 +32,7 @@ export interface Database {
           password?: string;
           resetPasswordJti?: string;
           is_deleted?: boolean;
-          role?: string;
+          role?: UserRole;
         };
       };
 

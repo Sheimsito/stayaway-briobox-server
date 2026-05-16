@@ -3,11 +3,122 @@ import { userDAO } from "../dao/userDAO";
 import { Request, Response } from "express";
 import config from "../config/config.js";
 import bcrypt from "bcrypt";
+import { UserRole } from "../types/database";
 
 
 interface UserProfileRequest {
     userId: string;
 }
+
+/**
+ * 
+ */
+
+const createUser = async (req: any, res: Response) => {
+  try {
+    const userId: string = req.user?.userId;
+    const { email, name, password, role } = req.body;
+
+
+    // Verify that the role is valid
+    if (!Object.values(UserRole).includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Rol inválido. Los roles permitidos son: empleado, admin y visitante."
+      });
+    }
+
+    // Verifies password structure ( One mayus, one number and one special character with 8 characters minimum)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial."
+      });
+    }
+
+    // Verifies email structure
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "El correo debe tener una estructura válida."
+      });
+    }
+
+    // Verify that the name is valid
+    const nameRegex = /^[A-Za-z ]+$/;
+    if (!nameRegex.test(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "El nombre debe contener solo letras y espacios."
+      });
+    }
+
+    // Verify that the user does not exist
+    const existingUser = await userDAO.findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "El correo ya está registrado."
+      });
+    }
+
+    const userIsAdmin = await userDAO.findById(userId);
+    if (!userIsAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado."
+      });
+    }
+
+    if (userIsAdmin.role !== UserRole.ADMIN) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no autorizado."
+      });
+    }
+
+    // Actually we have to think about this one <<---------------------------------->>
+    if (role === UserRole.ADMIN) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no autorizado."
+      });
+    }
+
+    // Create user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await userDAO.create({
+      name: name,
+      email: email,
+      password: hashedPassword,
+      role: role,
+    });
+
+    res.status(201).json({
+      success: true,
+      user: user,
+      message: "Usuario creado exitosamente."
+    });
+
+  } catch (err: unknown) {
+    if (config.nodeEnv === "development") {
+      console.error(err instanceof Error ? err.message : "Error interno del servidor");
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor.", err: err instanceof Error ? err.message : "Error interno del servidor"
+    });
+  }
+}
+
+
+
+
+
 /**
  * Retrieves the profile of the authenticated user.
  *
@@ -78,7 +189,7 @@ const updateUserProfile = async (req: any, res: Response) => {
         });
       }
 
-      if (existingUser.role !== 'admin' && role === 'admin') {
+      if (existingUser.role !== UserRole.ADMIN && role === UserRole.ADMIN) {
         return res.status(403).json({
           success: false,
           message: "No puedes actualizar a un usuario a administrador sin serlo tú."
