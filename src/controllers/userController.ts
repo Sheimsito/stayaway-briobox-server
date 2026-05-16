@@ -28,6 +28,33 @@ const createUser = async (req: any, res: Response) => {
       });
     }
 
+    // Verifies password structure ( One mayus, one number and one special character with 8 characters minimum)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial."
+      });
+    }
+
+    // Verifies email structure
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "El correo debe tener una estructura válida."
+      });
+    }
+
+    // Verify that the name is valid
+    const nameRegex = /^[A-Za-z ]+$/;
+    if (!nameRegex.test(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "El nombre debe contener solo letras y espacios."
+      });
+    }
+
     // Verify that the user does not exist
     const existingUser = await userDAO.findByEmail(email);
     if (existingUser) {
