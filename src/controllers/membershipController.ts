@@ -4,7 +4,7 @@ import { MembershipInsert, MembershipUpdate } from '../types/database.js';
 import config from '../config/config.js';
 
 
-export  class MembershipController {
+export default class MembershipController {
   private membershipService: MembershipService;
 
   constructor(membershipService: MembershipService) {
@@ -200,6 +200,32 @@ export  class MembershipController {
       res.status(500).json({
         success: false,
         message: errorMessage
+      });
+    }
+  }
+
+  /**
+   * Get pending memberships (Admin only)
+   * @async
+   * @param req 
+   * @param res 
+   * @returns 
+   */
+  async getPendingMemberships(req: Request, res: Response) {
+    try {
+      const memberships = await this.membershipService.getPendingMemberships();
+      res.status(200).json({
+        success: true,
+        memberships,
+      });
+    } catch (err: unknown) {
+      if (config.nodeEnv === 'development') {
+        console.error(err);
+      }
+      const errorMessage = err instanceof Error ? err.message : 'Error al obtener las membresías pendientes.';
+      res.status(500).json({
+        success: false,
+        message: errorMessage,
       });
     }
   }
