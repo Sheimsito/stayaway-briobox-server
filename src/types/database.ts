@@ -36,6 +36,27 @@ export interface Database {
         };
       };
 
+      login_attempts: {
+        Row: {
+          id: string;
+          user_id: string;
+          attempt_at: Date;
+          ip_address: string;
+          success: boolean;
+        };
+        Insert: {
+          user_id: string;
+          ip_address: string;
+          success: boolean;
+        };
+        Update: {
+          user_id?: string;
+          attempt_at?: Date;
+          ip_address?: string;
+          success?: boolean;
+        };
+      };
+
       clients: {
         Row: {
           id: string;
@@ -73,6 +94,83 @@ export interface Database {
           is_deleted?: boolean;
         };
       };
+
+      membership_freeze: {
+        Row: {
+          id: string;
+          membership_id: string;
+          start_date: Date;
+          end_date: Date;
+          is_indefinite: boolean;
+          created_by: string;
+          created_at: Date;
+        };
+        Insert: {
+          membership_id: string;
+          start_date: Date;
+          end_date: Date;
+          is_indefinite: boolean;
+          created_by: string;
+        };
+        Update: {
+          membership_id?: string;
+          start_date?: Date;
+          end_date?: Date;
+          is_indefinite?: boolean;
+          created_by?: string;
+        };
+      };
+
+      membership: {
+        Row: {
+          id: string;
+          customer_id: string;
+          plan_id: string;
+          status: string;
+          start_date: Date;
+          end_date: Date;
+          is_deleted: boolean;
+          created_at: Date;
+          updated_at: Date;
+        };
+        Insert: {
+          customer_id: string;
+          plan_id: string;
+          status: string;
+          start_date: Date;
+          end_date: Date;
+        };
+        Update: {
+          customer_id?: string;
+          plan_id?: string;
+          status?: string;
+          start_date?: Date;
+          end_date?: Date;
+          is_deleted?: boolean;
+        };
+      };
+
+      membership_plans: {
+        Row: {
+          id: string;
+          created_by: string;
+          name: string;
+          price: number;
+          duration_days: number;
+          is_active: boolean;
+        };
+        Insert: {
+          name: string;
+          price: number;
+          duration_days: number;
+        };
+        Update: {
+          name?: string;
+          price?: number;
+          duration_days?: number;
+          is_active?: boolean;
+        };
+      };
     };
   };
 }
@@ -84,10 +182,30 @@ export type UserRow = Database['public']['Tables']['users']['Row'];
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
+// Login Attempts
+export type LoginAttemptRow = Database['public']['Tables']['login_attempts']['Row'];
+export type LoginAttemptInsert = Database['public']['Tables']['login_attempts']['Insert'];
+export type LoginAttemptUpdate = Database['public']['Tables']['login_attempts']['Update'];
+
 // Client
 export type ClientRow = Database['public']['Tables']['clients']['Row'];
 export type ClientInsert = Database['public']['Tables']['clients']['Insert'];
 export type ClientUpdate = Database['public']['Tables']['clients']['Update'];
+
+// Membership
+export type MembershipRow = Database['public']['Tables']['membership']['Row'];
+export type MembershipInsert = Database['public']['Tables']['membership']['Insert'];
+export type MembershipUpdate = Database['public']['Tables']['membership']['Update'];
+
+// Membership Plans
+export type MembershipPlanRow = Database['public']['Tables']['membership_plans']['Row'];
+export type MembershipPlanInsert = Database['public']['Tables']['membership_plans']['Insert'];
+export type MembershipPlanUpdate = Database['public']['Tables']['membership_plans']['Update'];
+
+// Membership Freeze
+export type MembershipFreezeRow = Database['public']['Tables']['membership_freeze']['Row'];
+export type MembershipFreezeInsert = Database['public']['Tables']['membership_freeze']['Insert'];
+export type MembershipFreezeUpdate = Database['public']['Tables']['membership_freeze']['Update'];
 
 
 

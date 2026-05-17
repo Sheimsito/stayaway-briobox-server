@@ -1,6 +1,5 @@
 import { BaseDAO } from './baseDAO.js';
 import { supabaseGeneric as supabase } from '../lib/supabaseClient.js';
-import bcrypt from 'bcrypt';
 import type { ClientRow, ClientInsert, ClientUpdate } from '../types/database.js';
 
 /**
