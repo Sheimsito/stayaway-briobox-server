@@ -55,4 +55,25 @@ export class MembershipDAO extends BaseDAO<MembershipRow, MembershipInsert, Memb
     }
     return data as MembershipRow;
   }
+
+  async findAll(filters?: { status?: string; customer_id?: string }): Promise<MembershipRow[]> {
+    let query = supabase.from('membership').select('*');
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    if (filters?.customer_id) {
+      query = query.eq('customer_id', filters.customer_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(`[MembershipDAO] findAll failed:`, error.message);
+      throw new Error(`[membership] findAll: ${error.message}`);
+    }
+
+    return (data as MembershipRow[]) ?? [];
+  }
 }
