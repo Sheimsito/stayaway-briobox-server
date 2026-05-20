@@ -10,10 +10,22 @@ function handleControllerError(err: unknown, defaultMessage: string, res: Respon
   if (config.nodeEnv === 'development') {
     console.error(err);
   }
-  const errorMessage = err instanceof Error ? err.message : defaultMessage;
-  
+  let errorMessage = err instanceof Error ? err.message : defaultMessage;
   let status = 500;
-  if (
+
+  // Intercept and translate low-level coercion errors from database
+  if (errorMessage.includes('Cannot coerce the result to a single JSON object')) {
+    status = 404;
+    if (errorMessage.includes('[membership_plans]')) {
+      errorMessage = 'El plan de membresía especificado no existe.';
+    } else if (errorMessage.includes('[clients]')) {
+      errorMessage = 'El cliente especificado no existe.';
+    } else if (errorMessage.includes('[membership]')) {
+      errorMessage = 'No se encontró la membresía solicitada.';
+    } else {
+      errorMessage = 'El recurso solicitado no existe.';
+    }
+  } else if (
     errorMessage.includes('no encontrado') || 
     errorMessage.includes('no encontrada') || 
     errorMessage.includes('no se encontró') ||
@@ -32,7 +44,9 @@ function handleControllerError(err: unknown, defaultMessage: string, res: Respon
     errorMessage.includes('inválido') || 
     errorMessage.includes('requerido') || 
     errorMessage.includes('obligatorio') ||
-    errorMessage.includes('debe ser')
+    errorMessage.includes('debe ser') ||
+    errorMessage.includes('vacío') ||
+    errorMessage.includes('proporcionar')
   ) {
     status = 400;
   }
@@ -103,6 +117,13 @@ export default class MembershipController {
       }
 
       const updates: MembershipUpdate = req.body;
+      if (!updates || Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debe proporcionar al menos un campo para realizar la actualización.'
+        });
+      }
+
       const membership = await this.membershipService.updateMembership(membershipId, updates);
       res.status(200).json({
         success: true,

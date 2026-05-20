@@ -10,10 +10,20 @@ function handleControllerError(err: unknown, defaultMessage: string, res: Respon
   if (config.nodeEnv === 'development') {
     console.error(err);
   }
-  const errorMessage = err instanceof Error ? err.message : defaultMessage;
-  
+  let errorMessage = err instanceof Error ? err.message : defaultMessage;
   let status = 500;
-  if (
+
+  // Intercept and translate low-level coercion errors from database
+  if (errorMessage.includes('Cannot coerce the result to a single JSON object')) {
+    status = 404;
+    if (errorMessage.includes('[membership_freeze]')) {
+      errorMessage = 'El registro de congelamiento solicitado no existe.';
+    } else if (errorMessage.includes('[membership]')) {
+      errorMessage = 'No se encontró la membresía solicitada.';
+    } else {
+      errorMessage = 'El recurso solicitado no existe.';
+    }
+  } else if (
     errorMessage.includes('no encontrado') || 
     errorMessage.includes('no encontrada') || 
     errorMessage.includes('no se encontró') ||
@@ -34,6 +44,8 @@ function handleControllerError(err: unknown, defaultMessage: string, res: Respon
     errorMessage.includes('requerido') || 
     errorMessage.includes('obligatorio') ||
     errorMessage.includes('debe ser') ||
+    errorMessage.includes('vacío') ||
+    errorMessage.includes('proporcionar') ||
     errorMessage.includes('anterior') ||
     errorMessage.includes('posterior')
   ) {
@@ -157,6 +169,12 @@ export default class MembershipFreezeController {
       }
 
       const updates: MembershipFreezeUpdate = req.body;
+      if (!updates || Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debe proporcionar al menos un campo para realizar la actualización.'
+        });
+      }
 
       if (updates.start_date) {
         const d = new Date(updates.start_date);
