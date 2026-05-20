@@ -14,6 +14,7 @@ const membershipFreezeController = new MembershipFreezeController(new Membership
 // Client Membership routes
 router.post('/customers', membershipController.createMembership.bind(membershipController));
 router.put('/customers/:id', membershipController.updateMembership.bind(membershipController));
+router.put('/customers/:id', membershipController.cancelMembership.bind(membershipController));
 router.get('/customers', membershipController.getAllMemberships.bind(membershipController));
 router.get('/customers/active', membershipController.getActiveMemberships.bind(membershipController));
 router.get('/customers/pending', membershipController.getPendingMemberships.bind(membershipController));
@@ -25,14 +26,14 @@ router.put('/plans/:id', membershipPlanController.updatePlan.bind(membershipPlan
 router.get('/plans/active', membershipPlanController.getActivePlans.bind(membershipPlanController));
 router.get('/plans/disabled', membershipPlanController.getDisabledPlans.bind(membershipPlanController));
 router.get('/plans/:id', membershipPlanController.getPlanById.bind(membershipPlanController));
-router.put('/plans/:id/activate', membershipPlanController.activatePlan.bind(membershipPlanController));
-router.put('/plans/:id/deactivate', membershipPlanController.deactivatePlan.bind(membershipPlanController));
+router.put('/plans/activate/:id', membershipPlanController.activatePlan.bind(membershipPlanController));
+router.put('/plans/deactivate/:id', membershipPlanController.deactivatePlan.bind(membershipPlanController));
 
 // Membership Freeze routes
-router.post('/:membershipId/freeze', membershipFreezeController.createFreeze.bind(membershipFreezeController));
-router.get('/:membershipId/freezes', membershipFreezeController.getFreezesByMembershipId.bind(membershipFreezeController));
-router.put('/freeze/:freezeId', membershipFreezeController.updateFreeze.bind(membershipFreezeController));
-router.put('/freeze/:freezeId/cancel', membershipFreezeController.cancelFreeze.bind(membershipFreezeController));
-router.put('/freeze/:freezeId/activate', membershipFreezeController.activateFreeze.bind(membershipFreezeController));
+router.post('/freezes/:membershipId', membershipFreezeController.createFreeze.bind(membershipFreezeController));
+router.get('/freezes/:membershipId', membershipFreezeController.getFreezesByMembershipId.bind(membershipFreezeController));
+router.put('/freezes/:freezeId', membershipFreezeController.updateFreeze.bind(membershipFreezeController));
+router.put('/freeze/cancel/:freezeId', membershipFreezeController.cancelFreeze.bind(membershipFreezeController));
+router.put('/freeze/activate/:freezeId', membershipFreezeController.activateFreeze.bind(membershipFreezeController));
 
 export default router;
