@@ -214,57 +214,60 @@ export interface Database {
         };
       };
 
-      cash_register_sessions: {
+      products: {
         Row: {
           id: number;
+          supplier_id: number;
+          name: string;
+          price: number;
+          stock: number;
+          is_active: boolean;
           created_at: Date;
-          opened_by: number;
-          closed_by: number | null;
-          opening_balance: number;
-          closing_balance: number | null;
-          opened_at: Date;
-          closed_at: Date | null;
-          notes: string | null;
-        };
+          updated_at: Date;
+        }
         Insert: {
-          opened_by: number;
-          opening_balance: number;
-          notes?: string | null;
-        };
+          supplier_id: number;
+          name: string;
+          price: number;
+          stock: number;         
+        }
         Update: {
-          closed_by?: number;
-          closing_balance?: number;
-          closed_at?: Date;
-          notes?: string | null;
-        };
+          supplier_id?: number;
+          name?: string;
+          price?: number;
+          stock?: number;
+          is_active?: boolean;
+          updated_at?: Date;
+        }
       };
 
-      cash_register_movements: {
+      suppliers: {
         Row: {
           id: number;
+          name: string;
+          email: string;
+          nit: string;
+          phone: string;
+          address: string;
+          is_active: boolean;
           created_at: Date;
-          session_id: number;
-          created_by: number;
-          movement_type: string;
-          amount: number;
-          description: string;
-          reference_type: string | null;
-          reference_id: number | null;
-        };
+          updated_at: Date;
+        }
         Insert: {
-          session_id: number;
-          created_by: number;
-          movement_type: string;
-          amount: number;
-          description: string;
-          reference_type?: string | null;
-          reference_id?: number | null;
-        };
+          name: string;
+          email: string;
+          nit: string;      
+          address: string;
+        }
         Update: {
-          movement_type?: string;
-          amount?: number;
-          description?: string;
-        };
+          name?: string;
+          email?: string;
+          nit?: string;
+          phone?: string;
+          address?: string;
+          is_active?: boolean;
+          updated_at?: Date;
+        }
       };
     };
   };
@@ -302,10 +305,10 @@ export type PaymentSplitRow = Database['public']['Tables']['payment_splits']['Ro
 export type PaymentSplitInsert = Database['public']['Tables']['payment_splits']['Insert'];
 export type PaymentSplitUpdate = Database['public']['Tables']['payment_splits']['Update'];
 
-export type CashRegisterSessionRow = Database['public']['Tables']['cash_register_sessions']['Row'];
-export type CashRegisterSessionInsert = Database['public']['Tables']['cash_register_sessions']['Insert'];
-export type CashRegisterSessionUpdate = Database['public']['Tables']['cash_register_sessions']['Update'];
+export type ProductRow = Database['public']['Tables']['products']['Row'];
+export type ProductInsert = Database['public']['Tables']['products']['Insert'];
+export type ProductUpdate = Database['public']['Tables']['products']['Update'];
 
-export type CashRegisterMovementRow = Database['public']['Tables']['cash_register_movements']['Row'];
-export type CashRegisterMovementInsert = Database['public']['Tables']['cash_register_movements']['Insert'];
-export type CashRegisterMovementUpdate = Database['public']['Tables']['cash_register_movements']['Update'];
+export type SupplierRow = Database['public']['Tables']['suppliers']['Row'];
+export type SupplierInsert = Database['public']['Tables']['suppliers']['Insert'];
+export type SupplierUpdate = Database['public']['Tables']['suppliers']['Update'];
