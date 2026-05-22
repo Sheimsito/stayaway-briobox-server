@@ -133,15 +133,15 @@ export interface Database {
           updated_at: Date;
         };
         Insert: {
-          customer_id: string;
-          plan_id: string;
+          customer_id: string | number;
+          plan_id: string | number;
           status: string;
           start_date: Date;
           end_date: Date;
         };
         Update: {
-          customer_id?: string;
-          plan_id?: string;
+          customer_id?: string | number;
+          plan_id?: string | number;
           status?: string;
           start_date?: Date;
           end_date?: Date;
