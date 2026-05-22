@@ -25,6 +25,7 @@ router.use('/payments', authenticateToken, paymentRoutes);
 router.use('/cash-register', cashRegisterRoutes);
 
 router.use('/products', authenticateToken, productRoutes);
+
 router.use('/suppliers', authenticateToken, supplierRoutes);
 
 export default router;
