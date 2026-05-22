@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "NodeNext",
     "target": "ESNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "strict": true,
     "sourceMap": true,

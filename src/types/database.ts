@@ -4,13 +4,12 @@ export enum UserRole {
   VISITANTE = 'visitante'
 }
 
-// This is the type for the database for maintaining the consistency of the data
 export interface Database {
   public: {
     Tables: {
       users: {
         Row: {
-          id: string;
+          id: number;
           name: string;
           email: string;
           password: string;
@@ -38,19 +37,19 @@ export interface Database {
 
       login_attempts: {
         Row: {
-          id: string;
-          user_id: string;
+          id: number;
+          user_id: number;
           attempt_at: Date;
           ip_address: string;
           success: boolean;
         };
         Insert: {
-          user_id: string;
+          user_id: number;
           ip_address: string;
           success: boolean;
         };
         Update: {
-          user_id?: string;
+          user_id?: number;
           attempt_at?: Date;
           ip_address?: string;
           success?: boolean;
@@ -59,7 +58,7 @@ export interface Database {
 
       clients: {
         Row: {
-          id: string;
+          id: number;
           first_name: string;
           middle_name: string;
           paternal_last_name: string;
@@ -97,63 +96,61 @@ export interface Database {
 
       membership_freeze: {
         Row: {
-          id: string;
-          membership_id: string;
+          id: number;
+          membership_id: number;
           start_date: Date;
           end_date: Date;
           is_indefinite: boolean;
-          created_by: string;
+          created_by: number;
           created_at: Date;
         };
         Insert: {
-          membership_id: string;
+          membership_id: number;
           start_date: Date;
           end_date: Date;
           is_indefinite: boolean;
-          created_by: string;
+          created_by: number;
         };
         Update: {
-          membership_id?: string;
+          membership_id?: number;
           start_date?: Date;
           end_date?: Date;
           is_indefinite?: boolean;
-          created_by?: string;
+          created_by?: number;
         };
       };
 
       membership: {
         Row: {
-          id: string;
-          customer_id: string;
-          plan_id: string;
+          id: number;
+          customer_id: number;
+          plan_id: number;
           status: string;
           start_date: Date;
           end_date: Date;
-          is_deleted: boolean;
           created_at: Date;
           updated_at: Date;
         };
         Insert: {
-          customer_id: string;
-          plan_id: string;
+          customer_id: number;
+          plan_id: number;
           status: string;
           start_date: Date;
           end_date: Date;
         };
         Update: {
-          customer_id?: string;
-          plan_id?: string;
+          customer_id?: number;
+          plan_id?: number;
           status?: string;
           start_date?: Date;
           end_date?: Date;
-          is_deleted?: boolean;
         };
       };
 
       membership_plans: {
         Row: {
-          id: string;
-          created_by: string;
+          id: number;
+          created_at: Date;
           name: string;
           price: number;
           duration_days: number;
@@ -171,43 +168,81 @@ export interface Database {
           is_active?: boolean;
         };
       };
+
+      payments: {
+        Row: {
+          id: number;
+          created_at: Date;
+          created_by: number | null;
+          customer_id: number;
+          total_amount: number;
+          reference_type: string | null;
+          reference_id: number | null;
+          notes: string | null;
+        };
+        Insert: {
+          created_by: number | null;
+          customer_id: number;
+          total_amount: number;
+          reference_type?: string | null;
+          reference_id?: number | null;
+          notes?: string | null;
+        };
+        Update: {
+          notes?: string | null;
+          reference_type?: string | null;
+        };
+      };
+
+      payment_splits: {
+        Row: {
+          id: number;
+          payment_id: number;
+          payment_method: string;
+          amount: number;
+        };
+        Insert: {
+          payment_id: number;
+          payment_method: string;
+          amount: number;
+        };
+        Update: {
+          payment_method?: string;
+          amount?: number;
+        };
+      };
     };
   };
 }
 
-// Helper types for easy access (extracted from Database schema)
-
-// User
 export type UserRow = Database['public']['Tables']['users']['Row'];
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
-// Login Attempts
 export type LoginAttemptRow = Database['public']['Tables']['login_attempts']['Row'];
 export type LoginAttemptInsert = Database['public']['Tables']['login_attempts']['Insert'];
 export type LoginAttemptUpdate = Database['public']['Tables']['login_attempts']['Update'];
 
-// Client
 export type ClientRow = Database['public']['Tables']['clients']['Row'];
 export type ClientInsert = Database['public']['Tables']['clients']['Insert'];
 export type ClientUpdate = Database['public']['Tables']['clients']['Update'];
 
-// Membership
 export type MembershipRow = Database['public']['Tables']['membership']['Row'];
 export type MembershipInsert = Database['public']['Tables']['membership']['Insert'];
 export type MembershipUpdate = Database['public']['Tables']['membership']['Update'];
 
-// Membership Plans
 export type MembershipPlanRow = Database['public']['Tables']['membership_plans']['Row'];
 export type MembershipPlanInsert = Database['public']['Tables']['membership_plans']['Insert'];
 export type MembershipPlanUpdate = Database['public']['Tables']['membership_plans']['Update'];
 
-// Membership Freeze
 export type MembershipFreezeRow = Database['public']['Tables']['membership_freeze']['Row'];
 export type MembershipFreezeInsert = Database['public']['Tables']['membership_freeze']['Insert'];
 export type MembershipFreezeUpdate = Database['public']['Tables']['membership_freeze']['Update'];
 
+export type PaymentRow = Database['public']['Tables']['payments']['Row'];
+export type PaymentInsert = Database['public']['Tables']['payments']['Insert'];
+export type PaymentUpdate = Database['public']['Tables']['payments']['Update'];
 
-
-
-
+export type PaymentSplitRow = Database['public']['Tables']['payment_splits']['Row'];
+export type PaymentSplitInsert = Database['public']['Tables']['payment_splits']['Insert'];
+export type PaymentSplitUpdate = Database['public']['Tables']['payment_splits']['Update'];
