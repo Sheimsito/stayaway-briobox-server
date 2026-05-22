@@ -132,15 +132,15 @@ export interface Database {
           updated_at: Date;
         };
         Insert: {
-          customer_id: number;
-          plan_id: number;
+          customer_id: string | number;
+          plan_id: string | number;
           status: string;
           start_date: Date;
           end_date: Date;
         };
         Update: {
-          customer_id?: number;
-          plan_id?: number;
+          customer_id?: string | number;
+          plan_id?: string | number;
           status?: string;
           start_date?: Date;
           end_date?: Date;
@@ -211,6 +211,59 @@ export interface Database {
           amount?: number;
         };
       };
+
+      cash_register_sessions: {
+        Row: {
+          id: number;
+          created_at: Date;
+          opened_by: number;
+          closed_by: number | null;
+          opening_balance: number;
+          closing_balance: number | null;
+          opened_at: Date;
+          closed_at: Date | null;
+          notes: string | null;
+        };
+        Insert: {
+          opened_by: number;
+          opening_balance: number;
+          notes?: string | null;
+        };
+        Update: {
+          closed_by?: number;
+          closing_balance?: number;
+          closed_at?: Date;
+          notes?: string | null;
+        };
+      };
+
+      cash_register_movements: {
+        Row: {
+          id: number;
+          created_at: Date;
+          session_id: number;
+          created_by: number;
+          movement_type: string;
+          amount: number;
+          description: string;
+          reference_type: string | null;
+          reference_id: number | null;
+        };
+        Insert: {
+          session_id: number;
+          created_by: number;
+          movement_type: string;
+          amount: number;
+          description: string;
+          reference_type?: string | null;
+          reference_id?: number | null;
+        };
+        Update: {
+          movement_type?: string;
+          amount?: number;
+          description?: string;
+        };
+      };
     };
   };
 }
@@ -246,3 +299,11 @@ export type PaymentUpdate = Database['public']['Tables']['payments']['Update'];
 export type PaymentSplitRow = Database['public']['Tables']['payment_splits']['Row'];
 export type PaymentSplitInsert = Database['public']['Tables']['payment_splits']['Insert'];
 export type PaymentSplitUpdate = Database['public']['Tables']['payment_splits']['Update'];
+
+export type CashRegisterSessionRow = Database['public']['Tables']['cash_register_sessions']['Row'];
+export type CashRegisterSessionInsert = Database['public']['Tables']['cash_register_sessions']['Insert'];
+export type CashRegisterSessionUpdate = Database['public']['Tables']['cash_register_sessions']['Update'];
+
+export type CashRegisterMovementRow = Database['public']['Tables']['cash_register_movements']['Row'];
+export type CashRegisterMovementInsert = Database['public']['Tables']['cash_register_movements']['Insert'];
+export type CashRegisterMovementUpdate = Database['public']['Tables']['cash_register_movements']['Update'];

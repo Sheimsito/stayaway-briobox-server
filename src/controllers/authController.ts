@@ -139,7 +139,7 @@ const forgotPassword = async (req: Request<{}, {}, ForgotPasswordRequest>, res: 
         { expiresIn: '1h' , jwtid }
       );
   
-      await userDAO.updateResetPasswordJti(user.id, jwtid);
+      await userDAO.updateResetPasswordJti(String(user.id), jwtid);
   
       const resetLink: string = `${config.frontendUrl}/olvidar-pw2?token=${resetToken}`;
   
@@ -228,7 +228,7 @@ const resetPassword = async (req: Request<{}, {}, ResetPasswordRequest>, res: Re
       }
   
       // Invalidate the token and update the password
-      await userDAO.updateResetPasswordJti(user.id, "");
+      await userDAO.updateResetPasswordJti(String(user.id), "");
       await userDAO.updateById(user.id, { password: await bcrypt.hash(newPassword, 10) });
 
       // Send password changed notification email
