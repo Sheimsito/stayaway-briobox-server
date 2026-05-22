@@ -1,4 +1,5 @@
 import { SupplierDAO } from '../dao/supplierDAO.js';
+import type { Paginated } from '../dao/baseDAO.js';
 import type { SupplierRow, SupplierInsert, SupplierUpdate } from '../types/database.js';
 
 export class SupplierService {
@@ -8,7 +9,7 @@ export class SupplierService {
     return this.dao.create(data);
   }
 
-  async getAll(page: number = 1, limit: number = 10): Promise<SupplierRow[]> {
+  async getAll(page: number = 1, limit: number = 10): Promise<Paginated<SupplierRow>> {
     const offset = (page - 1) * limit;
     return this.dao.list({ limit, offset });
   }

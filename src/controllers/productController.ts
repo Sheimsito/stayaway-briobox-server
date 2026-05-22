@@ -20,8 +20,8 @@ export const createProduct = async (req: any, res: Response) => {
 export const getProducts = async (req: any, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
-  const products = await service.getAll(page, limit);
-  res.json({ success: true, products, page, limit });
+  const { data: products, count } = await service.getAll(page, limit);
+  res.json({ success: true, products, count, page, limit });
 };
 
 export const getProductById = async (req: any, res: Response) => {

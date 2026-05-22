@@ -1,4 +1,5 @@
 import { ProductDAO } from '../dao/productDAO.js';
+import type { Paginated } from '../dao/baseDAO.js';
 import type { ProductRow, ProductInsert, ProductUpdate } from '../types/database.js';
 
 export class ProductService {
@@ -8,7 +9,7 @@ export class ProductService {
     return this.dao.create(data);
   }
 
-  async getAll(page: number = 1, limit: number = 10): Promise<ProductRow[]> {
+  async getAll(page: number = 1, limit: number = 10): Promise<Paginated<ProductRow>> {
     const offset = (page - 1) * limit;
     return this.dao.list({ limit, offset });
   }

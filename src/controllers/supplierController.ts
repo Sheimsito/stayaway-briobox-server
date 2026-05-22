@@ -20,8 +20,8 @@ export const createSupplier = async (req: any, res: Response) => {
 export const getSuppliers = async (req: any, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
-  const suppliers = await service.getAll(page, limit);
-  res.json({ success: true, suppliers, page, limit });
+  const { data: suppliers, count } = await service.getAll(page, limit);
+  res.json({ success: true, suppliers, count, page, limit });
 };
 
 export const getSupplierById = async (req: any, res: Response) => {
