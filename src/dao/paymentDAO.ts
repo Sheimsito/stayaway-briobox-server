@@ -60,7 +60,7 @@ export class PaymentDAO extends BaseDAO<PaymentRow, PaymentInsert, PaymentUpdate
    * @param customerId - The bigint ID of the customer.
    * @returns Array of payment rows.
    */
-  async findByCustomerId(customerId: number): Promise<PaymentRow[]> {
+  async findByCustomerId(customerId: string): Promise<PaymentRow[]> {
     const { data, error } = await supabase
       .from('payments')
       .select('*')

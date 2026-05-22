@@ -14,7 +14,7 @@ const membershipFreezeController = new MembershipFreezeController(new Membership
 // Client Membership routes
 router.post('/customers', membershipController.createMembership.bind(membershipController));
 router.put('/customers/:id', membershipController.updateMembership.bind(membershipController));
-router.put('/customers/:id', membershipController.cancelMembership.bind(membershipController));
+router.put('/customers/cancel/:id', membershipController.cancelMembership.bind(membershipController));
 router.get('/customers', membershipController.getAllMemberships.bind(membershipController));
 router.get('/customers/active', membershipController.getActiveMemberships.bind(membershipController));
 router.get('/customers/pending', membershipController.getPendingMemberships.bind(membershipController));

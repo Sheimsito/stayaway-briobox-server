@@ -19,7 +19,7 @@ export interface RegisterPaymentInput {
 
 export interface PaymentReceipt {
   paymentId: number;
-  customerId: number;
+  customerId: string;
   membershipId: number;
   totalAmount: number;
   paidAmount: number;

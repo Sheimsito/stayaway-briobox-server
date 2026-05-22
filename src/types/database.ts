@@ -176,7 +176,7 @@ export interface Database {
           id: number;
           created_at: Date;
           created_by: number | null;
-          customer_id: number;
+          customer_id: string;
           total_amount: number;
           reference_type: string | null;
           reference_id: number | null;
@@ -184,7 +184,7 @@ export interface Database {
         };
         Insert: {
           created_by: number | null;
-          customer_id: number;
+          customer_id: string;
           total_amount: number;
           reference_type?: string | null;
           reference_id?: number | null;
