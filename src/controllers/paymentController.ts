@@ -48,15 +48,15 @@ export default class PaymentController {
 
   /**
    * Registers a new membership payment supporting fractional payments across multiple methods.
-   * Expected body: { membershipId: number, splits: [{ method, amount, reference? }] }
+   * Expected body: { membershipId: number, splits: [{ payment_method, amount }], notes?: string }
    * @async
    * @param req - Express request.
    * @param res - Express response.
    */
   async registerPayment(req: Request, res: Response) {
     try {
-      const { membershipId, splits } = req.body;
-      const createdBy = (req as any).user?.id ?? null;
+      const { membershipId, splits, notes } = req.body;
+      const createdBy = (req as any).user?.userId ?? null;
 
       if (!membershipId) {
         return res.status(400).json({
@@ -84,6 +84,7 @@ export default class PaymentController {
         membershipId: parsedMembershipId,
         splits,
         createdBy: createdBy ? Number(createdBy) : null,
+        notes,
       });
 
       return res.status(201).json({
@@ -101,54 +102,40 @@ export default class PaymentController {
   }
 
   /**
-   * Retrieves all payments for a given membership including each payment's splits.
+   * Retrieves all payments linked to a given membership.
    * @async
    * @param req - Express request with membershipId in params.
    * @param res - Express response.
    */
   async getPaymentsByMembership(req: Request, res: Response) {
     try {
-      const parsedId = Number(req.params.membershipId);
-
-      if (isNaN(parsedId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'El parámetro membershipId debe ser un número válido.',
-        });
+      const membershipId = Number(req.params.membershipId);
+      if (isNaN(membershipId)) {
+        return res.status(400).json({ success: false, message: 'El ID de membresía es inválido.' });
       }
 
-      const payments = await this.paymentService.getPaymentsByMembership(parsedId);
-
-      return res.status(200).json({ success: true, payments });
+      const data = await this.paymentService.getPaymentsByMembership(membershipId);
+      return res.status(200).json({ success: true, data });
     } catch (err: unknown) {
-      return handlePaymentError(err, 'Error al obtener los pagos de la membresía.', res);
+      return handlePaymentError(err, 'Error al obtener los pagos.', res);
     }
   }
 
   /**
-   * Retrieves a single payment by its ID including its splits.
+   * Retrieves a single payment by its ID along with its splits.
    * @async
-   * @param req - Express request with paymentId in params.
+   * @param req - Express request with id in params.
    * @param res - Express response.
    */
   async getPaymentById(req: Request, res: Response) {
     try {
-      const parsedId = Number(req.params.paymentId);
-
-      if (isNaN(parsedId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'El parámetro paymentId debe ser un número válido.',
-        });
+      const paymentId = Number(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ success: false, message: 'El ID de pago es inválido.' });
       }
 
-      const result = await this.paymentService.getPaymentById(parsedId);
-
-      return res.status(200).json({
-        success: true,
-        payment: result.payment,
-        splits: result.splits,
-      });
+      const data = await this.paymentService.getPaymentById(paymentId);
+      return res.status(200).json({ success: true, data });
     } catch (err: unknown) {
       return handlePaymentError(err, 'Error al obtener el pago.', res);
     }
