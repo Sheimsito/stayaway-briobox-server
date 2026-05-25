@@ -9,7 +9,7 @@ export interface Database {
     Tables: {
       users: {
         Row: {
-          id: number;
+          id: string;
           name: string;
           email: string;
           password: string;
@@ -37,19 +37,19 @@ export interface Database {
 
       login_attempts: {
         Row: {
-          id: number;
-          user_id: number;
+          id: string;
+          user_id: string;
           attempt_at: Date;
           ip_address: string;
           success: boolean;
         };
         Insert: {
-          user_id: number;
+          user_id: string;
           ip_address: string;
           success: boolean;
         };
         Update: {
-          user_id?: number;
+          user_id?: string;
           attempt_at?: Date;
           ip_address?: string;
           success?: boolean;
@@ -58,7 +58,7 @@ export interface Database {
 
       clients: {
         Row: {
-          id: number;
+          id: string;
           first_name: string;
           middle_name: string;
           paternal_last_name: string;
@@ -96,38 +96,39 @@ export interface Database {
 
       membership_freeze: {
         Row: {
-          id: number;
-          membership_id: number;
+          id: string;
+          membership_id: string;
           start_date: Date;
           end_date: Date;
           is_indefinite: boolean;
-          created_by: number;
+          created_by: string;
           created_at: Date;
         };
         Insert: {
-          membership_id: number;
+          membership_id: string;
           start_date: Date;
           end_date: Date;
           is_indefinite: boolean;
-          created_by: number;
+          created_by: string;
         };
         Update: {
-          membership_id?: number;
+          membership_id?: string;
           start_date?: Date;
           end_date?: Date;
           is_indefinite?: boolean;
-          created_by?: number;
+          created_by?: string;
         };
       };
 
       membership: {
         Row: {
-          id: number;
-          customer_id: number;
-          plan_id: number;
+          id: string;
+          customer_id: string;
+          plan_id: string;
           status: string;
           start_date: Date;
           end_date: Date;
+          is_deleted: boolean;
           created_at: Date;
           updated_at: Date;
         };
@@ -144,13 +145,14 @@ export interface Database {
           status?: string;
           start_date?: Date;
           end_date?: Date;
+          is_deleted?: boolean;
         };
       };
 
       membership_plans: {
         Row: {
-          id: number;
-          created_at: Date;
+          id: string;
+          created_by: string;
           name: string;
           price: number;
           duration_days: number;
@@ -167,14 +169,14 @@ export interface Database {
           duration_days?: number;
           is_active?: boolean;
         };
-      };
-
+       };
+      
       payments: {
         Row: {
           id: number;
           created_at: Date;
           created_by: number | null;
-          customer_id: number;
+          customer_id: string;
           total_amount: number;
           reference_type: string | null;
           reference_id: number | null;
@@ -182,7 +184,7 @@ export interface Database {
         };
         Insert: {
           created_by: number | null;
-          customer_id: number;
+          customer_id: string;
           total_amount: number;
           reference_type?: string | null;
           reference_id?: number | null;
