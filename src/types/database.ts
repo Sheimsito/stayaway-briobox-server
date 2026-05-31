@@ -266,6 +266,62 @@ export interface Database {
           description?: string;
         };
       };
+
+      products: {
+        Row: {
+          id: number;
+          supplier_id: number;
+          name: string;
+          price: number;
+          stock: number;
+          is_active: boolean;
+          created_at: Date;
+          updated_at: Date;
+        }
+        Insert: {
+          supplier_id: number;
+          name: string;
+          price: number;
+          stock: number;         
+        }
+        Update: {
+          supplier_id?: number;
+          name?: string;
+          price?: number;
+          stock?: number;
+          is_active?: boolean;
+          updated_at?: Date;
+        }
+      };
+
+      suppliers: {
+        Row: {
+          id: number;
+          name: string;
+          email: string;
+          nit: string;
+          phone: string;
+          address: string;
+          is_active: boolean;
+          created_at: Date;
+          updated_at: Date;
+        }
+        Insert: {
+          name: string;
+          email: string;
+          nit: string;      
+          address: string;
+        }
+        Update: {
+          name?: string;
+          email?: string;
+          nit?: string;
+          phone?: string;
+          address?: string;
+          is_active?: boolean;
+          updated_at?: Date;
+        }
+      };
     };
   };
 }
@@ -309,3 +365,11 @@ export type CashRegisterSessionUpdate = Database['public']['Tables']['cash_regis
 export type CashRegisterMovementRow = Database['public']['Tables']['cash_register_movements']['Row'];
 export type CashRegisterMovementInsert = Database['public']['Tables']['cash_register_movements']['Insert'];
 export type CashRegisterMovementUpdate = Database['public']['Tables']['cash_register_movements']['Update'];
+
+export type ProductRow = Database['public']['Tables']['products']['Row'];
+export type ProductInsert = Database['public']['Tables']['products']['Insert'];
+export type ProductUpdate = Database['public']['Tables']['products']['Update'];
+
+export type SupplierRow = Database['public']['Tables']['suppliers']['Row'];
+export type SupplierInsert = Database['public']['Tables']['suppliers']['Insert'];
+export type SupplierUpdate = Database['public']['Tables']['suppliers']['Update'];

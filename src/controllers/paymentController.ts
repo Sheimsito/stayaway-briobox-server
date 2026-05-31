@@ -129,7 +129,7 @@ export default class PaymentController {
    */
   async getPaymentById(req: Request, res: Response) {
     try {
-      const paymentId = Number(req.params.id);
+      const paymentId = Number(req.params.paymentId);
       if (isNaN(paymentId)) {
         return res.status(400).json({ success: false, message: 'El ID de pago es inválido.' });
       }
