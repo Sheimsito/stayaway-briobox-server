@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import CashRegisterController from '../controllers/cashRegisterController.js';
 import { CashRegisterService } from '../service/cashRegisterService.js';
-import { authenticateToken, requireEmployeeRole } from '../middleware/auth.js';
+import { authenticateToken, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 const cashRegisterService = new CashRegisterService();
 const cashRegisterController = new CashRegisterController(cashRegisterService);
 
-router.post('/open', authenticateToken, requireEmployeeRole, cashRegisterController.openSession.bind(cashRegisterController));
-router.get('/current', authenticateToken, requireEmployeeRole, cashRegisterController.getCurrentSession.bind(cashRegisterController));
-router.post('/movements', authenticateToken, requireEmployeeRole, cashRegisterController.addMovement.bind(cashRegisterController));
-router.post('/close', authenticateToken, requireEmployeeRole, cashRegisterController.closeSession.bind(cashRegisterController));
-router.get('/sessions', authenticateToken, requireEmployeeRole, cashRegisterController.listSessions.bind(cashRegisterController));
-router.get('/sessions/:id', authenticateToken, requireEmployeeRole, cashRegisterController.getSessionById.bind(cashRegisterController));
+router.post('/open',         authenticateToken, requirePermission('cash_register.open'),      cashRegisterController.openSession.bind(cashRegisterController));
+router.get('/current',       authenticateToken, requirePermission('cash_register.view'),      cashRegisterController.getCurrentSession.bind(cashRegisterController));
+router.post('/movements',    authenticateToken, requirePermission('cash_register.movements'), cashRegisterController.addMovement.bind(cashRegisterController));
+router.post('/close',        authenticateToken, requirePermission('cash_register.close'),     cashRegisterController.closeSession.bind(cashRegisterController));
+router.get('/sessions',      authenticateToken, requirePermission('cash_register.view'),      cashRegisterController.listSessions.bind(cashRegisterController));
+router.get('/sessions/:id',  authenticateToken, requirePermission('cash_register.view'),      cashRegisterController.getSessionById.bind(cashRegisterController));
 
 export default router;
