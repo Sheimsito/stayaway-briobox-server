@@ -10,22 +10,13 @@ import supplierRoutes from "./supplierRoutes.js";
 
 const router = Router();
 
-
-
 router.use("/auth", authRoutes);
 
-// Then implement the protected routes here. ( by Auth.js )
-
-router.use("/users",authenticateToken , userRoutes);
-
-router.use("/memberships",authenticateToken , membershipRoutes);
-
+router.use("/users", authenticateToken, userRoutes);
+router.use("/memberships", authenticateToken, membershipRoutes);
 router.use('/payments', authenticateToken, paymentRoutes);
-
-router.use('/cash-register', cashRegisterRoutes);
-
+router.use('/cash-register', authenticateToken, cashRegisterRoutes);
 router.use('/products', authenticateToken, productRoutes);
-
 router.use('/suppliers', authenticateToken, supplierRoutes);
 
 export default router;
