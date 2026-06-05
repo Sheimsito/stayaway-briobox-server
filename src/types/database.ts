@@ -169,8 +169,8 @@ export interface Database {
           duration_days?: number;
           is_active?: boolean;
         };
-       };
-      
+      };
+
       payments: {
         Row: {
           id: number;
@@ -277,13 +277,13 @@ export interface Database {
           is_active: boolean;
           created_at: Date;
           updated_at: Date;
-        }
+        };
         Insert: {
           supplier_id: number;
           name: string;
           price: number;
-          stock: number;         
-        }
+          stock: number;
+        };
         Update: {
           supplier_id?: number;
           name?: string;
@@ -291,7 +291,7 @@ export interface Database {
           stock?: number;
           is_active?: boolean;
           updated_at?: Date;
-        }
+        };
       };
 
       suppliers: {
@@ -305,13 +305,13 @@ export interface Database {
           is_active: boolean;
           created_at: Date;
           updated_at: Date;
-        }
+        };
         Insert: {
           name: string;
           email: string;
-          nit: string;      
+          nit: string;
           address: string;
-        }
+        };
         Update: {
           name?: string;
           email?: string;
@@ -320,11 +320,30 @@ export interface Database {
           address?: string;
           is_active?: boolean;
           updated_at?: Date;
-        }
+        };
       };
-    };
-  };
-}
+
+      user_permissions: {      
+        Row: {
+          id: number;
+          user_id: number;
+          permission: string;
+          granted_by: number;
+          created_at: Date;
+        };
+        Insert: {
+          user_id: number;
+          permission: string;
+          granted_by: number;
+        };
+        Update: {
+          permission?: string;
+        };
+      };
+
+    };   // ← cierre de Tables
+  };     // ← cierre de public
+}        // ← cierre de Database
 
 export type UserRow = Database['public']['Tables']['users']['Row'];
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
@@ -373,3 +392,7 @@ export type ProductUpdate = Database['public']['Tables']['products']['Update'];
 export type SupplierRow = Database['public']['Tables']['suppliers']['Row'];
 export type SupplierInsert = Database['public']['Tables']['suppliers']['Insert'];
 export type SupplierUpdate = Database['public']['Tables']['suppliers']['Update'];
+
+export type UserPermissionRow = Database['public']['Tables']['user_permissions']['Row'];
+export type UserPermissionInsert = Database['public']['Tables']['user_permissions']['Insert'];
+export type UserPermissionUpdate = Database['public']['Tables']['user_permissions']['Update'];

@@ -53,7 +53,7 @@ export class PaymentService {
 
   /**
    * Registers a membership payment with support for fractional payments across multiple methods.
-   * Updates membership status to 'activa' when the paid amount covers the full plan price.
+   * Updates membership status to 'activa' when the accumulated paid amount covers the full plan price.
    * @param input - Object containing membershipId, splits array, createdBy user ID and optional notes.
    * @returns The created payment, its splits and a receipt object.
    */
@@ -89,19 +89,27 @@ export class PaymentService {
       throw new Error('El plan de la membresía no existe.');
     }
 
-    const totalAmount = plan.price;
-    const paidAmount = parseFloat(
+    const currentPaidAmount = parseFloat(
       splits.reduce((sum, s) => sum + s.amount, 0).toFixed(2)
     );
 
-    if (paidAmount > totalAmount) {
+    const previousPayments = await this.paymentDAO.findByCustomerId(membership.customer_id);
+    const membershipPayments = previousPayments.filter(
+      (p) => p.reference_type === 'membership' && p.reference_id === membershipId
+    );
+
+    const previousPaidAmount = parseFloat(
+      membershipPayments.reduce((sum, p) => sum + Number(p.total_amount), 0).toFixed(2)
+    );
+
+    const totalAmount = plan.price;
+    const accumulatedPaidAmount = parseFloat((previousPaidAmount + currentPaidAmount).toFixed(2));
+
+    if (accumulatedPaidAmount > totalAmount) {
       throw new Error(
-        `El monto pagado (${paidAmount}) supera el total del plan (${totalAmount}).`
+        `El monto acumulado pagado (${accumulatedPaidAmount}) supera el total del plan (${totalAmount}).`
       );
     }
-
-    const remainingAmount = parseFloat((totalAmount - paidAmount).toFixed(2));
-    const isPaidInFull = remainingAmount === 0;
 
     const splitPayloads: Omit<PaymentSplitInsert, 'payment_id'>[] = splits.map((s) => ({
       payment_method: s.payment_method,
@@ -112,13 +120,16 @@ export class PaymentService {
       {
         created_by: createdBy,
         customer_id: membership.customer_id,
-        total_amount: paidAmount,
+        total_amount: currentPaidAmount,
         reference_type: 'membership',
         reference_id: membershipId,
         notes: notes ?? null,
       },
       splitPayloads
     );
+
+    const remainingAmount = parseFloat((totalAmount - accumulatedPaidAmount).toFixed(2));
+    const isPaidInFull = remainingAmount === 0;
 
     if (isPaidInFull && membership.status !== 'activa') {
       await this.membershipDAO.update(String(membershipId), { status: 'activa' });
@@ -129,7 +140,7 @@ export class PaymentService {
       customerId: payment.customer_id,
       membershipId,
       totalAmount,
-      paidAmount: payment.total_amount,
+      paidAmount: accumulatedPaidAmount,
       remainingAmount,
       isPaidInFull,
       createdAt: payment.created_at,
