@@ -27,7 +27,7 @@ export class MembershipFreezeService {
 
     // Validate if the membership already has an active freeze
     // Depending on the DAO this could use findActiveMembershipFreezes
-    const activeFreezes = await this.membershipFreezeDAO.findActiveMembershipFreezes(freezeData.membership_id);
+    const activeFreezes = await this.membershipFreezeDAO.findActiveMembershipFreezes(String(freezeData.membership_id));
     if (activeFreezes.length > 0) {
       throw new Error('La membresía ya se encuentra congelada actualmente.');
     }
