@@ -67,6 +67,7 @@ export interface Database {
           email: string;
           phone: string;
           address: string;
+          birth_date: string | null;
           is_deleted: boolean;
           created_at: Date;
           updated_at: Date;
@@ -80,6 +81,7 @@ export interface Database {
           email: string;
           phone: string;
           address: string;
+          birth_date?: string | null;
         };
         Update: {
           first_name?: string;
@@ -90,6 +92,7 @@ export interface Database {
           email?: string;
           phone?: string;
           address?: string;
+          birth_date?: string | null;
           is_deleted?: boolean;
         };
       };
@@ -341,6 +344,25 @@ export interface Database {
         };
       };
 
+      email_logs: {
+        Row: {
+          id: string;
+          client_id: string;
+          email_type: string;
+          sent_at: Date;
+        };
+        Insert: {
+          client_id: string;
+          email_type: string;
+          sent_at?: Date;
+        };
+        Update: {
+          client_id?: string;
+          email_type?: string;
+          sent_at?: Date;
+        };
+      };
+
     };   // ← cierre de Tables
   };     // ← cierre de public
 }        // ← cierre de Database
@@ -396,3 +418,7 @@ export type SupplierUpdate = Database['public']['Tables']['suppliers']['Update']
 export type UserPermissionRow = Database['public']['Tables']['user_permissions']['Row'];
 export type UserPermissionInsert = Database['public']['Tables']['user_permissions']['Insert'];
 export type UserPermissionUpdate = Database['public']['Tables']['user_permissions']['Update'];
+
+export type EmailLogRow = Database['public']['Tables']['email_logs']['Row'];
+export type EmailLogInsert = Database['public']['Tables']['email_logs']['Insert'];
+export type EmailLogUpdate = Database['public']['Tables']['email_logs']['Update'];
