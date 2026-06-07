@@ -78,14 +78,15 @@ Brio Box API es una API RESTful construida con **arquitectura en capas** que sep
 
 **Ubicación:** `src/routes/`, `src/controllers/`, `src/middleware/`
 
-#### 2. Business Logic & Services Layer (Capa de Servicios Externos)
+#### 2. Business Logic & Services Layer (Capa de Servicios & Tareas)
 
-**Responsabilidad:** Integrar servicios externos y orquestar operaciones complejas.
+**Responsabilidad:** Integrar servicios externos y orquestar tareas programadas o lógica compleja de negocio.
 
 **Componentes:**
-- **Email Service (Resend):** Envío de emails transaccionales (recuperación de contraseña)
+- **Email Service (Resend):** Envío de emails transaccionales (recuperación de contraseña, notificaciones de membresía, cumpleaños).
+- **Cron Jobs (Node-Cron):** Automatización diaria de recordatorios de pago e email de cumpleaños.
 
-**Ubicación:** `src/service/`
+**Ubicación:** `src/service/`, `src/jobs/`
 
 #### 3. Data Access Layer (Capa de Acceso a Datos)
 
@@ -277,39 +278,67 @@ app.use(errorHandler);             // Error handling
 src/
 ├── config/                   # 🔧 Configuración
 │   ├── config.ts             # Variables de entorno centralizadas
-│   └── server.ts             # Configuración de Express (CORS, body parser, middlewares)
+│   └── server.ts             # Configuración de Express (CORS, cookies, middlewares)
 │
 ├── controllers/              # 🎮 Controladores
-│   ├── authController.ts     # Registro, login, logout, forgot/reset password, verify auth
-│   └── userController.ts     # Perfil de usuario, actualización, soft delete
+│   ├── authController.ts     # Registro, login, logout, recuperación de contraseña, verificación
+│   ├── cashRegisterController.ts # Gestión de caja (apertura, cierre, movimientos)
+│   ├── membershipController.ts   # Operaciones de membresía (creación, renovación)
+│   ├── membershipFreezeController.ts # Congelamiento temporal de membresías
+│   ├── membershipPlanController.ts # Administración de planes de membresía
+│   ├── paymentController.ts  # Registro y control de pagos de clientes
+│   ├── productController.ts  # Control de stock y precios de productos
+│   ├── supplierController.ts # Gestión de proveedores
+│   ├── userController.ts     # Perfil, listados y eliminación lógica de usuarios
+│   └── userPermissionController.ts # Asignación y control de permisos de usuario
 │
 ├── dao/                      # 🗄️ Data Access Objects
-│   ├── baseDAO.ts            # DAO genérico (CRUD + soft delete)
-│   └── userDAO.ts            # DAO específico de usuarios
+│   ├── baseDAO.ts            # DAO genérico con operaciones CRUD y soft delete
+│   ├── cashRegisterDAO.ts    # DAO para sesiones y movimientos de caja
+│   ├── clientDAO.ts          # DAO para clientes del gimnasio/box
+│   ├── membershipDAO.ts      # DAO para membresías de clientes
+│   ├── membershipFreezeDAO.ts # DAO para congelamiento de membresías
+│   ├── membershipPlanDAO.ts  # DAO para planes de membresía
+│   ├── paymentDAO.ts         # DAO para pagos y splits
+│   ├── productDAO.ts         # DAO para productos
+│   ├── supplierDAO.ts        # DAO para proveedores
+│   ├── userDAO.ts            # DAO específico de usuarios
+│   └── userPermissionDAO.ts  # DAO para permisos de usuarios
+│
+├── jobs/                     # ⏰ Tareas Programadas (Cron Jobs)
+│   └── cronJobs.ts           # Envío automático de notificaciones de pago y cumpleaños
 │
 ├── lib/                      # 📚 Librerías externas
-│   └── supabaseClient.ts     # Cliente de Supabase (tipado y genérico)
+│   └── supabaseClient.ts     # Clientes de Supabase (tipado y genérico)
 │
 ├── middleware/               # 🛡️ Middlewares
 │   ├── auth.ts               # Autenticación JWT + rate limiting
-│   ├── errorHandler.ts       # Manejo centralizado de errores (Supabase, JWT, etc.)
-│   ├── logger.ts             # Logger de peticiones HTTP
+│   ├── errorHandler.ts       # Manejo centralizado de errores
+│   ├── logger.ts             # Registro de peticiones HTTP
 │   └── notFound.ts           # Manejo de rutas 404
 │
 ├── routes/                   # 🛣️ Definición de rutas
-│   ├── index.ts              # Router principal que agrupa todas las rutas
+│   ├── index.ts              # Router principal (punto de entrada de endpoints)
+│   ├── routes.ts             # Agrupador de rutas protegidas y públicas
 │   ├── authRoutes.ts         # Rutas de autenticación (públicas)
-│   └── userRoutes.ts         # Rutas de usuario (protegidas)
+│   ├── cashRegisterRoutes.ts # Rutas de caja (protegidas)
+│   ├── membershipRoutes.ts   # Rutas de membresías (protegidas)
+│   ├── paymentRoutes.ts      # Rutas de pagos (protegidas)
+│   ├── productRoutes.ts      # Rutas de productos (protegidas)
+│   ├── supplierRoutes.ts     # Rutas de proveedores (protegidas)
+│   ├── testJobRoutes.ts      # Rutas de prueba para forzar ejecución de cron jobs (desarrollo)
+│   ├── userPermissionRoutes.ts # Rutas de permisos de usuario
+│   └── userRoutes.ts         # Rutas de usuarios (protegidas)
 │
 ├── service/                  # 🌐 Servicios externos e integraciones
-│   ├── resendService.ts      # Servicio de emails (Resend API)
-│   └── emailTemplates.ts     # Plantillas de emails
+│   ├── resendService.ts      # Integración con la API de Resend para envío de emails
+│   └── emailTemplates.ts     # Plantillas HTML responsivas para emails
 │
 ├── types/                    # 🏷️ Tipos TypeScript compartidos
 │   ├── database.ts           # Tipos de base de datos (Supabase) - Single Source of Truth
-│   └── express.d.ts          # Extensiones de tipos de Express (AuthRequest)
+│   └── express.d.ts          # Extensiones para el objeto Request de Express (req.user)
 │
-└── server.ts                 # 🌐 Punto de entrada principal (HTTP server)
+└── server.ts                 # 🌐 Punto de entrada principal (Servidor HTTP + Init Cron Jobs)
 ```
 
 ---
@@ -357,20 +386,61 @@ export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
 ### Esquema de Base de Datos
 
-#### Tabla: `users`
+Las principales tablas del sistema en Supabase:
 
-| Columna           | Tipo      | Descripción                             |
-|-------------------|-----------|-----------------------------------------|
-| id                | UUID      | Primary Key (auto-generado)             |
-| name              | VARCHAR   | Nombre del usuario                      |
-| lastName          | VARCHAR   | Apellido del usuario                    |
-| age               | INTEGER   | Edad del usuario                        |
-| email             | VARCHAR   | Email único (unique constraint)         |
-| password          | VARCHAR   | Contraseña (hasheada con bcrypt)        |
-| resetPasswordJti  | VARCHAR   | Token para reset de contraseña          |
-| isDeleted         | BOOLEAN   | Soft delete flag                        |
-| createdAt         | TIMESTAMP | Fecha de creación                       |
-| updatedAt         | TIMESTAMP | Fecha de última actualización           |
+#### Tabla: `users`
+| Columna          | Tipo      | Descripción                              |
+|------------------|-----------|------------------------------------------|
+| id               | UUID      | Clave Primaria (auto-generado)           |
+| name             | VARCHAR   | Nombre del usuario del sistema           |
+| email            | VARCHAR   | Email único (credencial de acceso)       |
+| password         | VARCHAR   | Hash de contraseña (bcrypt)              |
+| resetPasswordJti | VARCHAR   | ID único de token de restablecimiento    |
+| is_deleted       | BOOLEAN   | Eliminación lógica                       |
+| role             | UserRole  | Rol del usuario (admin, empleado, etc.)  |
+| created_at       | TIMESTAMP | Fecha de registro                        |
+| updated_at       | TIMESTAMP | Última actualización                    |
+
+#### Tabla: `clients`
+| Columna            | Tipo      | Descripción                              |
+|--------------------|-----------|------------------------------------------|
+| id                 | UUID      | Clave Primaria                           |
+| first_name         | VARCHAR   | Nombre(s)                                |
+| paternal_last_name | VARCHAR   | Apellido Paterno                         |
+| maternal_last_name | VARCHAR   | Apellido Materno                         |
+| email              | VARCHAR   | Correo electrónico del cliente           |
+| phone              | VARCHAR   | Teléfono de contacto                     |
+| birth_date         | DATE      | Fecha de cumpleaños                      |
+| is_deleted         | BOOLEAN   | Eliminación lógica                       |
+
+#### Tabla: `membership`
+| Columna     | Tipo      | Descripción                              |
+|-------------|-----------|------------------------------------------|
+| id          | UUID      | Clave Primaria                           |
+| customer_id | UUID      | Referencia al cliente                    |
+| plan_id     | UUID      | Referencia al plan de membresía          |
+| status      | VARCHAR   | Estado de la membresía (activa, etc.)    |
+| start_date  | DATE      | Fecha de inicio                          |
+| end_date    | DATE      | Fecha de vencimiento                     |
+| is_deleted  | BOOLEAN   | Eliminación lógica                       |
+
+#### Tabla: `payments`
+| Columna      | Tipo      | Descripción                              |
+|--------------|-----------|------------------------------------------|
+| id           | INTEGER   | Clave Primaria                           |
+| customer_id  | UUID      | Referencia al cliente                    |
+| total_amount | NUMERIC   | Monto total pagado                       |
+| created_at   | TIMESTAMP | Fecha de pago                            |
+
+#### Tabla: `email_logs`
+| Columna    | Tipo      | Descripción                              |
+|------------|-----------|------------------------------------------|
+| id         | UUID      | Clave Primaria                           |
+| client_id  | UUID      | Cliente a quien se le envió el email     |
+| email_type | VARCHAR   | Tipo (upcoming_payment, birthday, etc.)  |
+| sent_at    | TIMESTAMP | Fecha de envío                           |
+
+*Nota: Existen otras tablas adicionales como `membership_plans`, `membership_freeze`, `payment_splits`, `cash_register_sessions`, `cash_register_movements`, `products`, `suppliers` y `user_permissions` completamente tipadas.*
 
 ### Conexión
 
@@ -449,6 +519,13 @@ export const supabaseGeneric = createClient(url, key);
 - Más fácil de testear (mocking)
 - No mezcla lógica de negocio con persistencia
 
+### 7. Tareas Programadas con Node-Cron
+
+**Razón:**
+- Automatiza notificaciones recurrentes sin intervención humana.
+- Configuración en zona horaria local (`America/Bogota`).
+- Idempotencia integrada mediante la tabla `email_logs` para evitar envíos múltiples el mismo día en caso de reinicios del servidor.
+
 ---
 
 ## 🔐 Seguridad
@@ -502,17 +579,25 @@ export const supabaseGeneric = createClient(url, key);
 
 ## 📊 Componentes Implementados
 
-| Componente            | Descripción                                                        | Estado          |
-|-----------------------|--------------------------------------------------------------------|-----------------|
-| **AuthController**    | Registro, login, logout, forgot/reset password, verify auth        | ✅ Implementado |
-| **UserController**    | Perfil, actualización, soft delete                                 | ✅ Implementado |
-| **BaseDAO**           | CRUD genérico + soft delete                                        | ✅ Implementado |
-| **UserDAO**           | Operaciones específicas de usuarios                                | ✅ Implementado |
-| **Auth Middleware**   | JWT verification + rate limiting                                   | ✅ Implementado |
-| **Error Handler**     | Manejo de errores Supabase/PostgreSQL                              | ✅ Implementado |
-| **Logger Middleware** | Logging de requests/responses                                      | ✅ Implementado |
-| **NotFound Middleware** | Manejo de rutas 404                                             | ✅ Implementado |
-| **Resend Service**    | Envío de emails transaccionales (recuperación de contraseña, etc.) | ✅ Implementado |
+| Componente                    | Descripción                                                             | Estado          |
+|-------------------------------|-------------------------------------------------------------------------|-----------------|
+| **AuthController**            | Registro, login, logout, forgot/reset password, verify auth             | ✅ Implementado |
+| **UserController**            | Perfil, listados de usuarios, actualización, soft delete                | ✅ Implementado |
+| **MembershipController**      | Creación, listado y edición de membresías de clientes                   | ✅ Implementado |
+| **MembershipFreezeController**| Congelamientos temporales e indefinidos de membresías                   | ✅ Implementado |
+| **MembershipPlanController**  | CRUD de planes de membresía y asignación de precios                     | ✅ Implementado |
+| **CashRegisterController**    | Control de aperturas, cierres e historial de caja                       | ✅ Implementado |
+| **PaymentController**         | Registro de pagos y splits en múltiples métodos de pago                 | ✅ Implementado |
+| **ProductController**         | Gestión de inventario de productos y stock                              | ✅ Implementado |
+| **SupplierController**        | CRUD de proveedores asociados a productos                               | ✅ Implementado |
+| **UserPermissionController**  | Gestión granular de permisos a usuarios                                 | ✅ Implementado |
+| **BaseDAO**                   | CRUD genérico, paginación y soft delete sobre Supabase                  | ✅ Implementado |
+| **UserDAO** / **ClientDAO**...| DAOs específicos que heredan del BaseDAO                                 | ✅ Implementado |
+| **Auth Middleware**           | JWT verification, inyección de usuario + rate limiting                  | ✅ Implementado |
+| **Error Handler**             | Manejo unificado de excepciones de DB, negocio y Express                | ✅ Implementado |
+| **Logger Middleware**         | Logging de peticiones HTTP entrantes                                    | ✅ Implementado |
+| **Resend Service**            | Integración de Resend para envío confiable de emails                    | ✅ Implementado |
+| **Cron Jobs (Email)**         | Envío programado de cumpleaños y cobros (upcoming, due, overdue)         | ✅ Implementado |
 
 ---
 
@@ -523,9 +608,10 @@ export const supabaseGeneric = createClient(url, key);
 - [Supabase Documentation](https://supabase.com/docs)
 - [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
 - [Resend Documentation](https://resend.com/docs)
+- [Node-cron Documentation](https://www.npmjs.com/package/node-cron)
 
 ---
 
-**Última actualización:** Mayo 2026  
-**Versión de arquitectura:** 1.0  
-**Estado:** Producción Ready (Auth & Users)
+**Última actualización:** Junio 2026  
+**Versión de arquitectura:** 2.0  
+**Estado:** Producción Ready (Módulos de Negocio Completos)
