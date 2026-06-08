@@ -23,6 +23,8 @@ router.post("/customer", userController.createClient);
 
 // Admin routes
 
+// Get all employees (admin only)
+router.get("/employees", userController.getAllEmployees);
 
 // Get user info
 router.get("/user", userController.getUserProfile);
