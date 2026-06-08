@@ -13,6 +13,8 @@ export const AVAILABLE_PERMISSIONS = [
   'users.create',
   'users.manage',
   'clients.manage',
+  'products.manage',
+  'suppliers.manage',
 ] as const;
 
 export type Permission = typeof AVAILABLE_PERMISSIONS[number];
