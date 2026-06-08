@@ -137,7 +137,7 @@ export class PaymentService {
 
     const receipt: PaymentReceipt = {
       paymentId: payment.id,
-      customerId: payment.customer_id,
+      customerId: payment.customer_id ?? membership.customer_id,
       membershipId,
       totalAmount,
       paidAmount: accumulatedPaidAmount,
