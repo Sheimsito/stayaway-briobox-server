@@ -57,15 +57,5 @@ router.get('/', (req, res) => {
 
 // Use main routes
 router.use('/', routes);
-
-// ── Dev-only: endpoints para probar cron jobs manualmente ────────────────────
-// Disponibles SOLO en NODE_ENV=development. No se montan en producción.
-if (process.env.NODE_ENV === 'development') {
-  // Importación dinámica para no cargar el módulo en producción
-  import('./testJobRoutes.js').then(({ default: testJobRouter }) => {
-    router.use('/dev/jobs', testJobRouter);
-    console.log('🔧 [Dev] Rutas de prueba de jobs montadas en /dev/jobs');
-  });
-}
-
 export default router;
+
