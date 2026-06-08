@@ -179,7 +179,7 @@ export interface Database {
           id: number;
           created_at: Date;
           created_by: number | null;
-          customer_id: string;
+          customer_id: string | null;       // ← nullable
           total_amount: number;
           reference_type: string | null;
           reference_id: number | null;
@@ -187,7 +187,7 @@ export interface Database {
         };
         Insert: {
           created_by: number | null;
-          customer_id: string;
+          customer_id?: string | null;      // ← opcional y nullable
           total_amount: number;
           reference_type?: string | null;
           reference_id?: number | null;
@@ -327,7 +327,7 @@ export interface Database {
         };
       };
 
-      user_permissions: {      
+      user_permissions: {
         Row: {
           id: number;
           user_id: number;
@@ -364,9 +364,9 @@ export interface Database {
         };
       };
 
-    };   // ← cierre de Tables
-  };     // ← cierre de public
-}        // ← cierre de Database
+    };
+  };
+}
 
 export type UserRow = Database['public']['Tables']['users']['Row'];
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
