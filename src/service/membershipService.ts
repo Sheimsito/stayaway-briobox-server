@@ -1,7 +1,7 @@
 import { MembershipDAO } from '../dao/membershipDAO.js';
 import { MembershipPlanDAO } from '../dao/membershipPlanDAO.js';
 import { ClientDAO } from '../dao/clientDAO.js';
-import type { MembershipRow, MembershipInsert, MembershipUpdate } from '../types/database.js';
+import type { MembershipRow, MembershipInsert, MembershipUpdate, PaymentRow, PaymentSplitRow, CashRegisterMovementRow } from '../types/database.js';
 
 export class MembershipService {
   private membershipDAO: MembershipDAO;
@@ -15,41 +15,41 @@ export class MembershipService {
   }
 
   /**
-   * Create membership validating plans and active memberships
+   * Creates a membership validating plan, client and active memberships.
+   * Requires an open cash register session.
+   * @param customerId - Client ID
+   * @param planId - Plan ID to assign
+   * @param sellerId - User processing the sale
+   * @param paymentMethod - Payment method used
    */
-  async createMembership(customerId: string, planId: string): Promise<MembershipRow> {
-    // 1. Validate that the client exists
+  async createMembership(
+    customerId: string,
+    planId: string,
+    sellerId: number,
+    paymentMethod: string,
+  ): Promise<{
+    membership: MembershipRow;
+    payment: PaymentRow;
+    splits: PaymentSplitRow[];
+    movement: CashRegisterMovementRow;
+  }> {
     const client = await this.clientDAO.findById(customerId);
-    if (!client) {
-      throw new Error(`Cliente con ID ${customerId} no encontrado.`);
-    }
+    if (!client) throw new Error(`Cliente con ID ${customerId} no encontrado.`);
 
-    // 2. Validate that the plan exists and is active
     const plan = await this.membershipPlanDAO.findById(planId);
-    if (!plan) {
-      throw new Error(`El plan con ID ${planId} no se encontró.`);
-    }
-    if (!plan.is_active) {
-      throw new Error(`El plan '${plan.name}' no está activo.`);
-    }
+    if (!plan) throw new Error(`El plan con ID ${planId} no se encontró.`);
+    if (!plan.is_active) throw new Error(`El plan '${plan.name}' no está activo.`);
 
-    // 3. Validate if the client already has an active membership
     const existingMemberships = await this.membershipDAO.findByClientId(customerId);
-    const hasActive = existingMemberships.some((m) => {
-      // We consider active if the status is 'activa' and the end date has not passed
-      return m.status === 'activa' && new Date(m.end_date) > new Date();
-    });
+    const hasActive = existingMemberships.some(
+      (m) => m.status === 'activa' && new Date(m.end_date) > new Date(),
+    );
+    if (hasActive) throw new Error('El cliente ya tiene una membresía activa.');
 
-    if (hasActive) {
-      throw new Error('El cliente ya tiene una membresía activa.');
-    }
-
-    // 4. Calculate start and end dates
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + plan.duration_days);
 
-    // 5. Create the membership
     const membershipData: MembershipInsert = {
       customer_id: customerId,
       plan_id: planId,
@@ -58,58 +58,65 @@ export class MembershipService {
       end_date: endDate,
     };
 
-    return await this.membershipDAO.create(membershipData);
+    return this.membershipDAO.createWithPayment(
+      membershipData,
+      plan.name,
+      plan.price,
+      customerId,
+      sellerId,
+      paymentMethod,
+    );
   }
 
   /**
-   * Cancel membership
+   * Cancels an existing membership.
+   * @param membershipId - Membership ID to cancel
    */
   async cancelMembership(membershipId: string): Promise<MembershipRow> {
     const membership = await this.membershipDAO.findById(membershipId);
-    if (!membership) {
-      throw new Error('Membresía no encontrada.');
-    }
-    if (membership.status === 'cancelada') {
-      throw new Error('La membresía ya se encuentra cancelada.');
-    }
-
-    return await this.membershipDAO.cancelMembership(membershipId);
+    if (!membership) throw new Error('Membresía no encontrada.');
+    if (membership.status === 'cancelada') throw new Error('La membresía ya se encuentra cancelada.');
+    return this.membershipDAO.cancelMembership(membershipId);
   }
 
   /**
-   * Get all memberships of a client
+   * Returns all memberships of a client.
+   * @param customerId - Client ID
    */
   async getClientMemberships(customerId: string): Promise<MembershipRow[]> {
-    return await this.membershipDAO.findByClientId(customerId);
+    return this.membershipDAO.findByClientId(customerId);
   }
 
   /**
-   * Get membership detail
+   * Returns membership detail by ID.
+   * @param membershipId - Membership ID
    */
   async getMembershipById(membershipId: string): Promise<MembershipRow> {
-    return await this.membershipDAO.findById(membershipId);
+    return this.membershipDAO.findById(membershipId);
   }
 
   /**
-   * Update membership data manually (ej. extension of dates)
+   * Manually updates membership data (e.g. date extension).
+   * @param membershipId - Membership ID
+   * @param updates - Fields to update
    */
   async updateMembership(membershipId: string, updates: MembershipUpdate): Promise<MembershipRow> {
-    return await this.membershipDAO.update(membershipId, updates);
+    return this.membershipDAO.update(membershipId, updates);
   }
 
   async getAllMemberships(): Promise<MembershipRow[]> {
-    return await this.membershipDAO.findAll();
+    return this.membershipDAO.findAll();
   }
 
   async getActiveMemberships(): Promise<MembershipRow[]> {
-    return await this.membershipDAO.findAll({ status: 'activa' });
+    return this.membershipDAO.findAll({ status: 'activa' });
   }
 
   async getCancelledMemberships(): Promise<MembershipRow[]> {
-    return await this.membershipDAO.findAll({ status: 'cancelada' });
+    return this.membershipDAO.findAll({ status: 'cancelada' });
   }
 
   async getPendingMemberships(): Promise<MembershipRow[]> {
-    return await this.membershipDAO.findAll({ status: 'pendiente' });
+    return this.membershipDAO.findAll({ status: 'pendiente' });
   }
 }

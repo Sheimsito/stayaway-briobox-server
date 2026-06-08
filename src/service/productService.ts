@@ -1,6 +1,13 @@
 import { ProductDAO } from '../dao/productDAO.js';
 import type { Paginated } from '../dao/baseDAO.js';
-import type { ProductRow, ProductInsert, ProductUpdate } from '../types/database.js';
+import type {
+  ProductRow,
+  ProductInsert,
+  ProductUpdate,
+  PaymentRow,
+  PaymentSplitRow,
+  CashRegisterMovementRow,
+} from '../types/database.js';
 
 export class ProductService {
   private dao = new ProductDAO();
@@ -22,9 +29,30 @@ export class ProductService {
     return this.dao.updateById(id, data);
   }
 
-  // Soft delete: set is_active to false
   async delete(id: number): Promise<boolean> {
     await this.dao.updateById(id, { is_active: false } as ProductUpdate);
     return true;
+  }
+
+  /**
+   * Sells a product: checks open cash session, decrements stock,
+   * creates payment record and registers cash movement.
+   * @param productId - Product to sell
+   * @param quantity - Units to sell
+   * @param sellerId - User ID processing the sale
+   * @param paymentMethod - Payment method used
+   */
+  async sell(
+    productId: number,
+    quantity: number,
+    sellerId: number,
+    paymentMethod: string,
+  ): Promise<{
+    product: ProductRow;
+    payment: PaymentRow;
+    splits: PaymentSplitRow[];
+    movement: CashRegisterMovementRow;
+  }> {
+    return this.dao.sellProduct(productId, quantity, sellerId, paymentMethod);
   }
 }
