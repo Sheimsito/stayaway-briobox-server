@@ -1,16 +1,45 @@
 import { Request, Response } from 'express';
 import { ProductService } from '../service/productService.js';
 import { UserRole } from '../types/database.js';
+import { userDAO } from '../dao/userDAO.js'
+import { SupplierService } from '../service/supplierService.js';
 
 const service = new ProductService();
+const supplierService = new SupplierService();
 
 export const createProduct = async (req: any, res: Response) => {
   try {
-    const role = req.user?.role;
+    const role = await userDAO.getUserRole(req.user.userId);
     if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
       return res.status(403).json({ success: false, message: 'No autorizado' });
     }
-    const product = await service.create(req.body);
+    const { name, price, stock, supplier_id } = req.body;
+    const priceNumber = Number(price);
+    const stockNumber = Number(stock);
+
+    if (
+      !name ||
+      Number.isNaN(priceNumber) ||
+      Number.isNaN(stockNumber) 
+     
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Datos inválidos'
+      });
+    }
+    const supplier = await supplierService.findActiveSuppliers(supplier_id);
+    
+    if (!supplier) {
+      return res.status(404).json({ success: false, message: 'Proveedor no encontrado' });
+    }
+    const productData = { // CHANGE THIS WHEN ADD TYPES ON CONTROLLERS
+      name,
+      price,
+      stock,
+      supplier_id
+    };
+    const product = await service.create(productData);
     res.status(201).json({ success: true, product });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message ?? 'Error interno' });
@@ -30,16 +59,41 @@ export const getProductById = async (req: any, res: Response) => {
 };
 
 export const updateProduct = async (req: any, res: Response) => {
-  const role = req.user?.role;
+  const role = await userDAO.getUserRole(req.user.userId);
   if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
     return res.status(403).json({ success: false, message: 'No autorizado' });
   }
-  const product = await service.update(Number(req.params.id), req.body);
+  const { name, price, stock, supplier_id } = req.body;
+  const priceNumber = Number(price);
+  const stockNumber = Number(stock);
+
+  if (
+    !name ||
+    Number.isNaN(priceNumber) ||
+    Number.isNaN(stockNumber) 
+   
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: 'Datos inválidos'
+    });
+  }
+  const supplier = await supplierService.findActiveSuppliers(supplier_id);
+  if (!supplier) {
+    return res.status(404).json({ success: false, message: 'Proveedor no encontrado' });
+  }
+  const productData = { // CHANGE THIS WHEN ADD TYPES ON CONTROLLERS
+    name,
+    price,
+    stock,
+    supplier_id
+  };
+  const product = await service.update(Number(req.params.id), productData);
   res.json({ success: true, product });
 };
 
 export const deleteProduct = async (req: any, res: Response) => {
-  const role = req.user?.role;
+  const role = await userDAO.getUserRole(req.user.userId);
   if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
     return res.status(403).json({ success: false, message: 'No autorizado' });
   }
