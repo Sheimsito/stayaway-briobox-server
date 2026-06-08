@@ -17,13 +17,13 @@ const resend = new Resend(config.resendApiKey);
  * @throws {Error} Throws an error if sending the email fails.
  */
 async function sendMail({ to, subject, text, html }: { to: string, subject: string, text: string, html: string }) {
-  try {
+  try {                          
     console.log('📧 Enviando email con Resend...');
     console.log('Para:', to);
-    console.log('Asunto:', subject);
+    console.log('Asunto:', subject);      
 
     const { data, error } = await resend.emails.send({
-      from: 'Airfilms <onboarding@resend.dev>', // Email verificado en Resend
+      from: 'BrioBox <onboarding@resend.dev>',
       to: [to],
       subject: subject,
       text: text,

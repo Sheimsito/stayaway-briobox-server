@@ -5,6 +5,7 @@ import notFound from "./middleware/notFound.js";
 import cookieParser from "cookie-parser";
 import config from "./config/config.js";
 import configureServer from "./config/server.js";
+import { initCronJobs } from "./jobs/cronJobs.js";
 
 // initialize the express app
 const app = express();
@@ -46,6 +47,9 @@ app.listen(PORT, () => {
     console.log(`🔧 API_PREFIX configurado como: "${config.apiPrefix}"`);
     console.log(`🔧 NODE_ENV: ${config.nodeEnv}`);
     console.log(`🔧 API_VERSION: ${config.apiVersion}`);
+
+    // Inicializar cron jobs de email
+    initCronJobs();
 });
 
 export default app;

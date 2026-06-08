@@ -3,6 +3,10 @@
  * Uses placeholder variables that will be replaced with actual values
  */
 
+import config from "../config/config";
+
+const LOGO_URL = config.logoUrl;
+
 export const emailTemplates: Record<string, string> = {
   'password-reset': `
     <!DOCTYPE html>
@@ -120,7 +124,7 @@ export const emailTemplates: Record<string, string> = {
     <body>
       <div class="container">
         <div class="header">
-          <img src="{{LOGO_URL}}" alt="{{APP_NAME}} Logo" class="header-logo" />
+          <img src="https://res.cloudinary.com/durvty9pm/image/upload/v1780794959/Captura_de_pantalla_2026-06-06_201400_gyobsq.png" alt=" Brio-Box Logo" class="header-logo" />
           <h1 style="color: white;">{{APP_NAME}}</h1>
           <p>Recuperación de Contraseña</p>
         </div>
@@ -210,4 +214,212 @@ export function generateEmailTemplate(templateName: keyof typeof emailTemplates,
   }
   
   return replaceTemplateVariables(template, variables);
+}
+
+
+
+/** Shared inline CSS injected into every membership template */
+const MEMBERSHIP_STYLE = `
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+  .container { max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .header { background: #101010; color: #ff0000; font-weight: 600; padding: 30px 20px; text-align: center; }
+  .header-logo { max-width: 120px; height: auto; margin-bottom: 15px; border-radius: 8px; }
+  .header h1 { margin: 0; font-size: 28px; color: white; font-weight: 600; }
+  .header p { margin: 10px 0 0; opacity: 0.9; font-size: 16px; color: #ff4800; }
+  .content { padding: 40px 30px; }
+  .content h2 { color: #333; margin-bottom: 20px; }
+  .highlight-box { background: #fff8e1; border-left: 4px solid #FF4500; padding: 20px; margin: 25px 0; border-radius: 4px; }
+  .button { display: inline-block; background: linear-gradient(135deg, #790000 0%, #FF4500 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 15px rgba(255,140,0,0.3); }
+  .footer { padding: 30px; text-align: center; color: #666; font-size: 14px; background: #fafafa; border-top: 1px solid #eee; }
+  @media (max-width: 600px) { .content { padding: 30px 20px; } .button { padding: 14px 24px; font-size: 14px; } }
+`;
+
+
+
+
+export interface UpcomingPaymentTemplateParams {
+  nombre: string;
+  fechaVencimiento: string;
+  diasRestantes: number;
+}
+
+/**
+ * Template: membership expires soon.
+ */
+export function upcomingPaymentTemplate({ nombre, fechaVencimiento, diasRestantes }: UpcomingPaymentTemplateParams): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu membresía de Brio-Box vence pronto 🏋️</title>
+  <style>${MEMBERSHIP_STYLE}</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://res.cloudinary.com/durvty9pm/image/upload/v1780794959/Captura_de_pantalla_2026-06-06_201400_gyobsq.png" alt="{{APP_NAME}} Logo" class="header-logo" />
+      <h1>Brio-Box</h1>
+      <p>Recordatorio de membresía</p>
+    </div>
+    <div class="content">
+      <h2>Hola ${nombre},</h2>
+      <p>Te avisamos que tu membresía en <strong>Brio-Box</strong> está por vencer en <strong>${diasRestantes} día${diasRestantes !== 1 ? 's' : ''}</strong>.</p>
+      <div class="highlight-box">
+        <strong>📅 Fecha de vencimiento:</strong> ${fechaVencimiento}
+      </div>
+      <p>Para seguir disfrutando de todos los beneficios del estudio sin interrupciones, te recomendamos renovar tu membresía antes de esa fecha.</p>
+      <p>Si tienes alguna pregunta o necesitas ayuda para renovar, no dudes en acercarte con nuestro equipo.</p>
+      <p>¡Seguimos entrenando juntos! </p>
+    </div>
+    <div class="footer">
+      <p><strong>Brio-Box</strong></p>
+      <p>Tu estudio fitness de confianza</p>
+      <p>Este email fue generado automáticamente, por favor no responder.</p>
+      <p>&copy; ${new Date().getFullYear()} BrioBox - Todos los derechos reservados</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// ── 2. Membership expires today ───────────────────────────────────────────
+
+export interface PaymentDueTodayTemplateParams {
+  nombre: string;
+  fechaVencimiento: string;
+}
+
+/**
+ * Template: Membership expires today.
+ */
+export function paymentDueTodayTemplate({ nombre, fechaVencimiento }: PaymentDueTodayTemplateParams): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoy es el día de renovar tu membresía en Brio-Box </title>
+  <style>${MEMBERSHIP_STYLE}</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://res.cloudinary.com/durvty9pm/image/upload/v1780794959/Captura_de_pantalla_2026-06-06_201400_gyobsq.png" alt="{{APP_NAME}} Logo" class="header-logo" />
+      <h1>Brio-Box</h1>
+      <p>¡Hoy es el día de renovar!</p>
+    </div>
+    <div class="content">
+      <h2>Hola ${nombre},</h2>
+      <p>Hoy, <strong>${fechaVencimiento}</strong>, es el día en que vence tu membresía en <strong>Brio-Box</strong>.</p>
+      <div class="highlight-box">
+        <strong>⚡ ¡Renueva hoy!</strong><br>
+        No pierdas el acceso al estudio. Renueva tu membresía antes de que termine el día para no perder ningún entrenamiento.
+      </div>
+      <p>Acércate a nuestras instalaciones o contáctanos para realizar tu renovación de forma rápida y sencilla.</p>
+      <p>¡Te esperamos en el estudio! 🏋️</p>
+    </div>
+    <div class="footer">
+      <p><strong>Brio-Box</strong></p>
+      <p>Tu estudio fitness de confianza</p>
+      <p>Este email fue generado automáticamente, por favor no responder.</p>
+      <p>&copy; ${new Date().getFullYear()} BrioBox - Todos los derechos reservados</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// ── 3. Overdue payment ──────────────────────────────────────────
+
+export interface OverduePaymentTemplateParams {
+  nombre: string;
+  fechaVencimiento: string;
+  diasAtrasados: number;
+}
+
+/**
+ * Template: membership overdue without renewal.
+ */
+export function overduePaymentTemplate({ nombre, fechaVencimiento, diasAtrasados }: OverduePaymentTemplateParams): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu membresía de Brio-Box ha vencido ⚠️</title>
+  <style>${MEMBERSHIP_STYLE}</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://res.cloudinary.com/durvty9pm/image/upload/v1780794959/Captura_de_pantalla_2026-06-06_201400_gyobsq.png" alt="{{APP_NAME}} Logo" class="header-logo" />
+      <h1>Brio-Box</h1>
+      <p>Membresía vencida</p>
+    </div>
+    <div class="content">
+      <h2>Hola ${nombre},</h2>
+      <p>Nos damos cuenta de que tu membresía en <strong>Brio-Box</strong> venció el <strong>${fechaVencimiento}</strong>, hace <strong>${diasAtrasados} día${diasAtrasados !== 1 ? 's' : ''}</strong>.</p>
+      <div class="highlight-box">
+        <strong>⚠️ Membresía vencida</strong><br>
+        Para recuperar el acceso completo a nuestras instalaciones, necesitas renovar tu membresía lo antes posible.
+      </div>
+      <p>¡Aún es tiempo de volver! Contáctanos y te ayudamos a ponerte al día para que no pierdas tu progreso.</p>
+      <p>Te esperamos con los brazos abiertos. </p>
+    </div>
+    <div class="footer">
+      <p><strong>Brio-Box</strong></p>
+      <p>Tu estudio fitness de confianza</p>
+      <p>Este email fue generado automáticamente, por favor no responder.</p>
+      <p>&copy; ${new Date().getFullYear()} BrioBox - Todos los derechos reservados</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// ── 4. Cumpleaños ────────────────────────────────────────────
+
+export interface BirthdayTemplateParams {
+  nombre: string;
+}
+
+/**
+ * Template: birthday greeting.
+ */
+export function birthdayTemplate({ nombre }: BirthdayTemplateParams): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¡Feliz cumpleaños de parte de Brio-Box! 🎂</title>
+  <style>${MEMBERSHIP_STYLE}</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://res.cloudinary.com/durvty9pm/image/upload/v1780794959/Captura_de_pantalla_2026-06-06_201400_gyobsq.png" alt=" Brio-Box Logo" class="header-logo" />
+      <h1>Brio-Box</h1>
+      <p>🎉 ¡Feliz cumpleaños! 🎉</p>
+    </div>
+    <div class="content">
+      <h2>¡Feliz cumpleaños, ${nombre}! 🎂</h2>
+      <p>Todo el equipo de <strong>Brio-Box</strong> te desea un increíble día lleno de energía, salud y celebración.</p>
+      <div class="highlight-box">
+        <strong>🎁 ¡Gracias por ser parte de nuestra familia!</strong><br>
+        Tu esfuerzo y dedicación nos inspiran cada día. Hoy es tu día — ¡celébralo con todo!
+      </div>
+      <p>Esperamos verte pronto en el estudio para seguir alcanzando nuevas metas juntos. 🏆</p>
+      <p>Con cariño, el equipo de Brio-Box 💪</p>
+    </div>
+    <div class="footer">
+      <p><strong>Brio-Box</strong></p>
+      <p>Tu estudio fitness de confianza</p>
+      <p>Este email fue generado automáticamente, por favor no responder.</p>
+      <p>&copy; ${new Date().getFullYear()} Brio-Box - Todos los derechos reservados</p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
