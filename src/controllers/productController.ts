@@ -59,37 +59,103 @@ export const getProductById = async (req: any, res: Response) => {
 };
 
 export const updateProduct = async (req: any, res: Response) => {
-  const role = await userDAO.getUserRole(req.user.userId);
-  if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
-    return res.status(403).json({ success: false, message: 'No autorizado' });
-  }
-  const { name, price, stock, supplier_id } = req.body;
-  const priceNumber = Number(price);
-  const stockNumber = Number(stock);
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'ID inválido' });
+    }
+    const role = await userDAO.getUserRole(req.user.userId);
 
-  if (
-    !name ||
-    Number.isNaN(priceNumber) ||
-    Number.isNaN(stockNumber) 
-   
-  ) {
-    return res.status(400).json({
+    if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
+      return res.status(403).json({
+        success: false,
+        message: 'No autorizado'
+      });
+    }
+
+    const { name, price, stock, supplier_id, is_active } = req.body;
+
+    if (price !== undefined) {
+      const priceNumber = Number(price);
+
+      if (Number.isNaN(priceNumber) || priceNumber <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Precio inválido'
+        });
+      }
+    }
+
+    if (stock !== undefined) {
+      const stockNumber = Number(stock);
+
+      if (Number.isNaN(stockNumber) || stockNumber < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Stock inválido'
+        });
+      }
+    }
+    if (is_active !== undefined) {
+      if (typeof is_active !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'is_active debe ser un valor booleano'
+        });
+      }
+    }
+
+    if (supplier_id !== undefined) {
+      const supplier = await supplierService.findActiveSuppliers(
+        supplier_id
+      );
+
+      if (!supplier) {
+        return res.status(404).json({
+          success: false,
+          message: 'Proveedor no encontrado'
+        });
+      }
+    }
+
+    const productData = {
+      ...(name !== undefined && { name }),
+      ...(price !== undefined && { price: Number(price) }),
+      ...(stock !== undefined && { stock: Number(stock) }),
+      ...(supplier_id !== undefined && {
+        supplier_id: Number(supplier_id)
+      }),
+      ...(is_active !== undefined && { is_active: Boolean(is_active) })
+    };
+
+    if (Object.keys(productData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se enviaron campos para actualizar'
+      });
+    }
+
+    const product = await service.update(
+      Number(req.params.id),
+      productData
+    );
+
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+
+    return res.json({
+      success: true,
+      product
+    });
+
+  } catch (err: any) {
+    return res.status(500).json({
       success: false,
-      message: 'Datos inválidos'
+      message: err.message ?? 'Error interno'
     });
   }
-  const supplier = await supplierService.findActiveSuppliers(supplier_id);
-  if (!supplier) {
-    return res.status(404).json({ success: false, message: 'Proveedor no encontrado' });
-  }
-  const productData = { // CHANGE THIS WHEN ADD TYPES ON CONTROLLERS
-    name,
-    price,
-    stock,
-    supplier_id
-  };
-  const product = await service.update(Number(req.params.id), productData);
-  res.json({ success: true, product });
 };
 
 export const deleteProduct = async (req: any, res: Response) => {
