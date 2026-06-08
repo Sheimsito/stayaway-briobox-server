@@ -166,3 +166,25 @@ export const deleteProduct = async (req: any, res: Response) => {
   await service.delete(Number(req.params.id));
   res.json({ success: true, message: 'Producto eliminado' });
 };
+
+export const sellProduct = async (req: any, res: Response) => {
+  try {
+    const productId = Number(req.params.id);
+    if (Number.isNaN(productId)) {
+      return res.status(400).json({ success: false, message: 'ID de producto inválido' });
+    }
+
+    const { quantity } = req.body;
+    const quantityNumber = Number(quantity);
+
+    if (!quantity || Number.isNaN(quantityNumber) || quantityNumber <= 0) {
+      return res.status(400).json({ success: false, message: 'Cantidad inválida' });
+    }
+
+    const product = await service.sell(productId, quantityNumber);
+
+    return res.status(200).json({ success: true, message: 'Venta registrada', product });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message ?? 'Error al procesar venta' });
+  }
+};

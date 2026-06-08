@@ -27,4 +27,12 @@ export class ProductService {
     await this.dao.updateById(id, { is_active: false } as ProductUpdate);
     return true;
   }
+    /**
+   * Sells a product by decrementing its stock.
+   * @param productId - Product to sell
+   * @param quantity - Units to sell
+   */
+  async sell(productId: number, quantity: number): Promise<ProductRow> {
+    return this.dao.sellProduct(productId, quantity);
+  }
 }
