@@ -27,4 +27,8 @@ export class SupplierService {
     await this.dao.updateById(id, { is_active: false } as SupplierUpdate);
     return true;
   }
+
+  async findActiveSuppliers(id: string) {
+    return this.dao.findActiveSuppliers(id);
+  }       
 }

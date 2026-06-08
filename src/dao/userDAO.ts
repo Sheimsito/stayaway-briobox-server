@@ -52,7 +52,7 @@ export class UserDAO extends BaseDAO<UserRow, UserInsert, UserUpdate> {
     }
   }
 
-  async getUserRole(userId: string): Promise<UserRole | null> {
+  async getUserRole(userId: string): Promise<UserRole | null> {                 
     const { data, error } = await supabase
       .from('users')
       .select('role')
