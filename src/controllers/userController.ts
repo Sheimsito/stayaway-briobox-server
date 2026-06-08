@@ -626,5 +626,48 @@ const softDeleteAccount = async (req: any, res: Response) => {
   }
 };
 
+/**
+ * Retrieves all active employees for admin use.
+ *
+ * @async
+ * @function getAllEmployees
+ * @param {Request} req - Express request object containing `userId` in `req.user`.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} Returns a JSON response with:
+ *  - 200: `{ success: true, users: employees }`
+ * if retrieved successfully.
+ *  - 403: `{ success: false, message: "Usuario no autorizado." }`
+ * if the requester is not an admin.
+ *  - 500: `{ success: false, message: "Error interno del servidor." }`
+ * if an internal error occurs.
+ */
+const getAllEmployees = async (req: any, res: Response) => {
+  try {
+    const userId: string = req.user?.userId;
 
-export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser };
+    const requester = await userDAO.findById(userId);
+    if (!requester || requester.role !== UserRole.ADMIN) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario no autorizado.',
+      });
+    }
+
+    const employees = await userDAO.findAllEmployees();
+
+    res.status(200).json({
+      success: true,
+      users: employees,
+    });
+  } catch (err: unknown) {
+    if (config.nodeEnv === 'development') {
+      console.error(err instanceof Error ? err.message : 'Error interno del servidor');
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor.',
+    });
+  }
+};
+
+export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser, getAllEmployees };

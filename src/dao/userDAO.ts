@@ -76,7 +76,29 @@ export class UserDAO extends BaseDAO<UserRow, UserInsert, UserUpdate> {
     const { password, resetPasswordJti, ...safeProfile } = user;
     return safeProfile;
   }
+
+  /**
+ * Retrieves all active employees (role = 'empleado', not soft-deleted).
+ *
+ * @returns {Promise<Omit<UserRow, 'password' | 'resetPasswordJti'>[]>} List of safe employee profiles.
+ */
+async findAllEmployees(): Promise<Omit<UserRow, 'password' | 'resetPasswordJti'>[]> {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email, role, created_at')
+        .eq('role', 'empleado')
+        .eq('is_deleted', false)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error(`[UserDAO] findAllEmployees failed:`, error.message);
+        throw new Error(`[users] findAllEmployees: ${error.message}`);
+      }
+
+      return (data ?? []) as Omit<UserRow, 'password' | 'resetPasswordJti'>[];
+    }
 }
+
 
 
 
