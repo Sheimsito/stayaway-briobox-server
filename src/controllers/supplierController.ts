@@ -1,16 +1,47 @@
 import { Request, Response } from 'express';
 import { SupplierService } from '../service/supplierService.js';
+import { userDAO } from '../dao/userDAO.js';
 import { UserRole } from '../types/database.js';
 
 const service = new SupplierService();
 
 export const createSupplier = async (req: any, res: Response) => {
   try {
-    const role = req.user?.role;
+    const role = await userDAO.getUserRole(req.user.userId);
     if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
       return res.status(403).json({ success: false, message: 'No autorizado' });
     }
-    const supplier = await service.create(req.body);
+    const { name, email, address, nit, phone } = req.body;
+
+    if (!name || !email || !address || !nit || !phone) {
+      console.log('!name', !name, '!email', !email, '!address', !address, '!nit', !nit, '!phone', !phone);
+      return res.status(400).json({ success: false, message: 'Faltan campos requeridos del proveedor' });
+    }
+
+    const nitRegex = /^\d{8,10}-\d$/;
+    if (!nitRegex.test(nit)) {
+      return res.status(400).json({ success: false, message: 'Formato de NIT inválido' });
+    }
+
+    const phoneRegex = /^3\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ success: false, message: 'Formato de teléfono inválido' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Formato de correo electrónico inválido' });
+    }
+
+    const supplierData = {
+      name,
+      email,
+      address,
+      nit,
+      phone
+    };
+
+    const supplier = await service.create(supplierData);
     res.status(201).json({ success: true, supplier });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message ?? 'Error interno' });
@@ -30,16 +61,46 @@ export const getSupplierById = async (req: any, res: Response) => {
 };
 
 export const updateSupplier = async (req: any, res: Response) => {
-  const role = req.user?.role;
+  const role = await userDAO.getUserRole(req.user.userId);
   if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
     return res.status(403).json({ success: false, message: 'No autorizado' });
   }
-  const supplier = await service.update(Number(req.params.id), req.body);
+  const { name, email, address, nit, phone } = req.body;
+
+  if (!name || !email || !address || !nit || !phone) {
+    console.log('!name', !name, '!email', !email, '!address', !address, '!nit', !nit, '!phone', !phone);
+    return res.status(400).json({ success: false, message: 'Faltan campos requeridos del proveedor' });
+  }
+
+  const nitRegex = /^\d{8,10}-\d$/;
+  if (!nitRegex.test(nit)) {
+    return res.status(400).json({ success: false, message: 'Formato de NIT inválido' });
+  }
+
+  const phoneRegex = /^3\d{9}$/;
+  if (!phoneRegex.test(phone)) {
+    return res.status(400).json({ success: false, message: 'Formato de teléfono inválido' });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ success: false, message: 'Formato de correo electrónico inválido' });
+  }
+
+  const supplierData = {
+    name,
+    email,
+    address,
+    nit,
+    phone
+  };
+
+  const supplier = await service.update(Number(req.params.id), supplierData);
   res.json({ success: true, supplier });
 };
 
 export const deleteSupplier = async (req: any, res: Response) => {
-  const role = req.user?.role;
+  const role = await userDAO.getUserRole(req.user.userId);
   if (role !== UserRole.ADMIN && role !== UserRole.EMPLEADO) {
     return res.status(403).json({ success: false, message: 'No autorizado' });
   }

@@ -1,7 +1,7 @@
 import { BaseDAO } from './baseDAO.js';
 import { supabaseGeneric as supabase } from '../lib/supabaseClient.js';
 import bcrypt from 'bcrypt';
-import type { UserRow, UserInsert, UserUpdate } from '../types/database.js';
+import type { UserRow, UserInsert, UserUpdate, UserRole } from '../types/database.js';
 
 /**
  * User Data Access Object
@@ -50,6 +50,21 @@ export class UserDAO extends BaseDAO<UserRow, UserInsert, UserUpdate> {
       console.error(`[UserDAO] updateResetPasswordJti failed for ${userId}:`, error.message);
       throw new Error(`[users] updateResetPasswordJti: ${error.message}`);
     }
+  }
+
+  async getUserRole(userId: string): Promise<UserRole | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`[UserDAO] getUserRole failed for ${userId}:`, error.message);
+      throw new Error(`[users] getUserRole: ${error.message}`);
+    }
+
+    return (data as { role: UserRole } | null)?.role ?? null;
   }
 
   /**

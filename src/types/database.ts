@@ -313,6 +313,7 @@ export interface Database {
           name: string;
           email: string;
           nit: string;
+          phone: string;
           address: string;
         };
         Update: {
