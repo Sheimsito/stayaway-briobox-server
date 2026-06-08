@@ -57,3 +57,5 @@ router.get('/', (req, res) => {
 
 // Use main routes
 router.use('/', routes);
+export default router;
+
