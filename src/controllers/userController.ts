@@ -390,6 +390,49 @@ const createClient = async (req: Request, res: Response) => {
   }
 }
 
+
+/**
+ * Save fingerprint template for a client
+ * PATCH /clients/:id/fingerprint
+ */
+const saveClientFingerprint = async (req: Request, res: Response) => {
+
+  try {
+    const { id } = req.params
+    const { fingerprint_template } = req.body
+ 
+    if (!id) {
+      return res.status(400).json({ message: 'El ID del cliente es requerido.' })
+    }
+ 
+    if (!fingerprint_template) {
+      return res.status(400).json({ message: 'El template de huella es requerido.' })
+    }
+ 
+    // Verify client exists
+    const existingClient = await clientDAO.findById(id)
+    if (!existingClient) {
+      return res.status(404).json({ message: 'Cliente no encontrado.' })
+    }
+ 
+    // Save fingerprint template
+    const updated = await clientDAO.updateById(id, {
+      fingerprint_hash: fingerprint_template,
+    } as any)
+ 
+    res.status(200).json({
+      success: true,
+      message: 'Huella registrada exitosamente.',
+      client: updated,
+    })
+ 
+  } catch (error: unknown) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Error interno del servidor',
+    })
+  }
+}
+
 /**
  * Retrieves the profile of the authenticated client.
  *
