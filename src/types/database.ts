@@ -68,6 +68,7 @@ export interface Database {
           phone: string;
           address: string;
           birth_date: string | null;
+          fingerprint_hash: string | null;
           is_deleted: boolean;
           created_at: Date;
           updated_at: Date;
@@ -93,6 +94,7 @@ export interface Database {
           phone?: string;
           address?: string;
           birth_date?: string | null;
+          fingerprint_hash?: string | null;
           is_deleted?: boolean;
         };
       };
