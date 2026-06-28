@@ -14,7 +14,10 @@ const router = Router();
 
 router.use('/auth', authRoutes);
 
+// Public: kiosk needs fingerprints and customer profile without auth token
 router.get('/fingerprints', userController.getAllFingerprints);
+router.get('/users/customer/:id', userController.getClientProfile);
+
 router.use('/users', authenticateToken, userRoutes);
 router.use('/memberships', authenticateToken, membershipRoutes);
 router.use('/payments', authenticateToken, paymentRoutes);
