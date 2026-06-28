@@ -84,10 +84,10 @@ export const findAllClients = async (page: number = 1, limit: number = 10): Prom
   };
 }
 
-export const getAllFingerPrints = async (): Promise<{ fingerprints: Array<{ id: string; fingerprint_template: string }> }> => {
+export const getAllFingerPrints = async (): Promise<{ fingerprints: Array<{ id: string; fingerprint_hash: string }> }> => {
   const { data, error } = await supabase
     .from('clients')
-    .select('id, fingerprint_template');
+    .select('id, fingerprint_hash');
 
   if (error) {
     console.error(`[ClientDAO] getAllFingerPrints failed:`, error.message);
@@ -95,7 +95,7 @@ export const getAllFingerPrints = async (): Promise<{ fingerprints: Array<{ id: 
   }
 
   return {
-    fingerprints: (data as Array<{ id: string; fingerprint_template: string }>) ?? []
+    fingerprints: (data as Array<{ id: string; fingerprint_hash: string }>) ?? []
   };
 }
 
