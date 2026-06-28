@@ -722,7 +722,7 @@ const getAllFingerprints = async (req: Request, res: Response): Promise<void> =>
       success: true,
       fingerprints: fingerprints.map(f => ({
         id: f.id,
-        fingerprint_template: f.fingerprint_template
+        fingerprint_hash: f.fingerprint_hash
       }))
     });
   } catch (err: unknown) {
