@@ -8,10 +8,13 @@ import cashRegisterRoutes from './cashRegisterRoutes.js';
 import productRoutes from './productRoutes.js';
 import supplierRoutes from './supplierRoutes.js';
 import userPermissionRoutes from './userPermissionRoutes.js';
+import userController from '../controllers/userController.js';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
+
+router.get('/fingerprints', userController.getAllFingerprints);
 router.use('/users', authenticateToken, userRoutes);
 router.use('/memberships', authenticateToken, membershipRoutes);
 router.use('/payments', authenticateToken, paymentRoutes);
