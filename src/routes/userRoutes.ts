@@ -21,6 +21,9 @@ router.delete("/customer/:id", userController.softDeleteAccount);
 // Create a new customer
 router.post("/customer", userController.createClient);
 
+// Save fingerprint
+router.patch("/customer/:id/fingerprint", userController.saveClientFingerprint);
+
 // Admin routes
 
 // Get all employees (admin only)

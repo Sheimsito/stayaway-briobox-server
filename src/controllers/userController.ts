@@ -713,4 +713,4 @@ const getAllEmployees = async (req: any, res: Response) => {
   }
 };
 
-export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser, getAllEmployees };
+export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser, getAllEmployees, saveClientFingerprint};
