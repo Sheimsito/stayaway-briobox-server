@@ -1,4 +1,4 @@
-import { clientDAO , findAllClients } from "../dao/clientDAO";
+import { clientDAO, findAllClients, getAllFingerPrints } from "../dao/clientDAO";
 import { userDAO } from "../dao/userDAO";
 import { Request, Response } from "express";
 import config from "../config/config.js";
@@ -713,4 +713,27 @@ const getAllEmployees = async (req: any, res: Response) => {
   }
 };
 
-export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser, getAllEmployees, saveClientFingerprint};
+// Get all fingerprints for kiosk enrollment
+const getAllFingerprints = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { fingerprints } = await getAllFingerPrints();
+
+    res.status(200).json({
+      success: true,
+      fingerprints: fingerprints.map(f => ({
+        id: f.id,
+        fingerprint_template: f.fingerprint_template
+      }))
+    });
+  } catch (err: unknown) {
+    if (config.nodeEnv === 'development') {
+      console.error(`[userController] getAllFingerprints error:`, err instanceof Error ? err.message : err);
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor.'
+    });
+  }
+};
+
+export default { createClient, getAllClients, getClientProfile, updateClient, softDeleteAccount, softDeleteUserProfile, updateUserProfile, getUserProfile, createUser, getAllEmployees, saveClientFingerprint, getAllFingerprints };

@@ -24,6 +24,9 @@ router.post("/customer", userController.createClient);
 // Save fingerprint
 router.patch("/customer/:id/fingerprint", userController.saveClientFingerprint);
 
+// Get all fingerprints for kiosk enrollment
+router.get("/customers/fingerprints", userController.getAllFingerprints);
+
 // Admin routes
 
 // Get all employees (admin only)
