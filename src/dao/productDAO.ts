@@ -103,7 +103,7 @@ export class ProductDAO extends BaseDAO<ProductRow, ProductInsert, ProductUpdate
     const movementPayload: CashRegisterMovementInsert = {
       session_id: session.id,
       created_by: sellerId,
-      movement_type: 'income',
+      movement_type: 'ingreso',
       amount: totalAmount,
       description: `Venta de producto: ${quantity} x ${product.name}`,
       reference_type: 'payment',
